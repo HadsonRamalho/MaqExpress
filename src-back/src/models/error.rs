@@ -3,42 +3,42 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Serialize)]
 pub enum ApiError {
-    #[error("Error processing your request: {0}")]
+    #[error("Erro processando a requisição: {0}")]
     Request(String),
 
-    #[error("Error while trying to connect to the database: {0}")]
+    #[error("Erro ao tentar conectar ao banco de dados: {0}")]
     DatabaseConnection(String),
 
-    #[error("Invalid authorization token")]
+    #[error("Token de autorização inválido")]
     InvalidAuthorizationToken,
 
-    #[error("Multiple errors while validating the authorization token: {0:?}")]
+    #[error("Múltiplos erros ao validar o token de autorização: {0:?}")]
     MultipleAuthorizationErrors(Vec<String>),
 
-    #[error("A database error occurred: {0}")]
+    #[error("Ocorreu um erro no banco de dados: {0}")]
     Database(String),
 
-    #[error("Failed to create token: {0}")]
+    #[error("Falha ao criar o token de autenticação: {0}")]
     CreateToken(String),
 
-    #[error("Missing fields in the request")]
+    #[error("Campos inválidos na requisição")]
     InvalidData,
 
-    #[error("Invalid email provided")]
+    #[error("E-mail inválido fornecido")]
     InvalidEmail,
 
-    #[error("User not found by email")]
+    #[error("Usuário não encontrado pelo e-mail")]
     EmailNotFound,
 
-    #[error("User is not active")]
+    #[error("Usuário não está ativo")]
     NotActiveUser,
 
-    #[error("Invalid password")]
+    #[error("Senha inválida")]
     InvalidPassword,
 
-    #[error("Missing frontend URL")]
+    #[error("URL do frontend não está presente")]
     FrontendUrl,
 
-    #[error("User not found")]
+    #[error("Usuário não encontrado")]
     UserNotFound,
 }

@@ -5,6 +5,7 @@ use axum::{Json, body::Body, extract::Request, middleware::Next, response::Respo
 use dotenvy::dotenv;
 use hyper::{HeaderMap, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode};
+use tracing::error;
 
 pub async fn jwt_auth(
     req: Request<Body>,
@@ -31,6 +32,7 @@ pub async fn extract_claims_from_header(
     let token = match token {
         Some(t) => t,
         None => {
+            error!("Token não está presente no header");
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ApiError::InvalidAuthorizationToken.to_string()),
@@ -48,7 +50,8 @@ pub async fn extract_claims_from_header(
 
     let claims = match decoded {
         Ok(data) => (token.to_string(), data.claims),
-        Err(_) => {
+        Err(e) => {
+            error!("Falha ao obter as claims do token: {}", e);
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ApiError::InvalidAuthorizationToken.to_string()),
@@ -86,6 +89,7 @@ pub async fn validate_claims(claims: &Claims) -> Result<StatusCode, (StatusCode,
         return Ok(StatusCode::OK);
     }
 
+    error!("Múltiplas falhas ao decodificar claims");
     Err((
         StatusCode::UNAUTHORIZED,
         Json(ApiError::MultipleAuthorizationErrors(errors).to_string()),
@@ -98,6 +102,7 @@ pub fn get_jwt_secret_from_env() -> Result<String, (StatusCode, Json<String>)> {
     match env::var("JWT_SECRET") {
         Ok(secret) => Ok(secret),
         Err(error) => {
+            error!("Erro ao obter JWT_SECRET do env");
             return Err((
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(ApiError::DatabaseConnection(error.to_string()).to_string()),
@@ -128,9 +133,13 @@ pub fn generate_jwt(input: UserAuthInfo) -> Result<String, (StatusCode, Json<Str
         &EncodingKey::from_secret(secret.as_ref()),
     ) {
         Ok(token) => Ok(token),
-        Err(e) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::CreateToken(e.to_string()).to_string()),
-        )),
+        Err(e) => {
+            error!("Erro ao codificar o token JWT");
+
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::CreateToken(e.to_string()).to_string()),
+            ))
+        }
     }
 }

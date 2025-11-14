@@ -1,3 +1,5 @@
+use tracing::info;
+
 pub mod controllers;
 pub mod models;
 pub mod routes;
@@ -7,7 +9,11 @@ pub mod schema;
 async fn main() {
     tracing_subscriber::fmt::init();
     let app = crate::routes::init_routes().await;
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3099").await.unwrap();
+    let port = 3099;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
+    info!("Servidor rodando na porta {}", port);
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),

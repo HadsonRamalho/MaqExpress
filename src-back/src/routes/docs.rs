@@ -23,7 +23,7 @@ pub fn get_api_docs() -> openapi::OpenApi {
     contact.url = Some("https://github.com/HadsonRamalho".to_string());
     docs.info.contact = Some(contact);
     docs.info.license = None;
-    docs.info.title = "Rust Backend Template".to_string();
+    docs.info.title = "MaqExpress API".to_string();
     docs.info.version = "0.1.0".to_string();
     docs.info.extensions = None;
     docs.info.terms_of_service = None;

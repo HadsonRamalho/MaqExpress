@@ -11,6 +11,7 @@ use diesel::{
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use tracing::error;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::ValidateEmail;
@@ -81,6 +82,7 @@ impl RegisterUser {
             || self.user_type.trim().is_empty()
             || !self.email.validate_email()
         {
+            error!("Ao menos um campo está vazio ao validar o cadastro do usuário.");
             return false;
         }
         true

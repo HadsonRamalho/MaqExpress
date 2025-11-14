@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -18,7 +19,10 @@ export function RegisterForm() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    document: "",
+    birthdate: "",
+    login_type: "SYSTEM",
+    user_type: "DEFAULT",
     password: "",
     confirmPassword: "",
     acceptTerms: false,
@@ -31,33 +35,32 @@ export function RegisterForm() {
     e.preventDefault()
 
     if (formData.password !== formData.confirmPassword) {
-      alert("As senhas não coincidem")
+      toast.error("As senhas não coincidem")
       return
     }
 
     if (!formData.acceptTerms) {
-      alert("Você deve aceitar os termos de uso")
+      toast.error("Você deve aceitar os termos de uso")
       return
     }
 
     setIsLoading(true)
 
     try {
-      // Simular cadastro - em produção, fazer chamada para API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const success = await register({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
+      await register({
+          name: formData.name,
+          email: formData.email,
+          document: formData.document,
+          password: formData.password,
+          birthdate: "",
+          login_type: "",
+          user_type: ""
       })
 
-      if (success) {
-        router.push("/minhas-maquinas")
-      }
+      router.push("/minhas-maquinas")
     } catch (error) {
       console.error("Erro no cadastro:", error)
+      toast.error(`Erro ao se cadastrar: ${JSON.parse(`${error}`).message}`);
     } finally {
       setIsLoading(false)
     }
