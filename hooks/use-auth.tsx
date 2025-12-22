@@ -1,5 +1,7 @@
 "use client"
 
+import { Register } from "@/interfaces/auth"
+import { AuthService } from "@/services/auth"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
 interface Address {
@@ -35,14 +37,9 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<boolean>
-  register: (userData: {
-    name: string
-    email: string
-    phone: string
-    password: string
-  }) => Promise<boolean>
-  updateProfile: (userData: Partial<User>) => Promise<boolean>
+  login: (email: string, password: string) => Promise<void>
+  register: (userData: Register) => Promise<void>
+  updateProfile: (userData: Partial<User>) => Promise<void>
   logout: () => void
 }
 
@@ -53,17 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Verificar se há usuário logado no localStorage
-    const savedUser = localStorage.getItem("maqexpress_user")
+    const savedUser = localStorage.getItem("MAQEXPRESS_USER")
     if (savedUser) {
       setUser(JSON.parse(savedUser))
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<void> => {
     try {
-      // Simular autenticação - em produção, fazer chamada para API
       const mockUser: User = {
         id: "1",
         name: "João Silva",
@@ -91,58 +86,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(mockUser)
-      localStorage.setItem("maqexpress_user", JSON.stringify(mockUser))
-      return true
+      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(mockUser))
+
+      await AuthService.login({ email, password });
     } catch (error) {
       console.error("Erro no login:", error)
-      return false
-    }
+     }
   }
 
-  const register = async (userData: {
-    name: string
-    email: string
-    phone: string
-    password: string
-  }): Promise<boolean> => {
+  const register = async (userData: Register) : Promise<void> => {
     try {
-      // Simular cadastro - em produção, fazer chamada para API
       const newUser: User = {
         id: Date.now().toString(),
         name: userData.name,
         email: userData.email,
-        phone: userData.phone,
         avatar: "/diverse-profile-avatars.png",
         useInternalPayment: true,
         createdAt: new Date().toISOString().split("T")[0],
       }
 
       setUser(newUser)
-      localStorage.setItem("maqexpress_user", JSON.stringify(newUser))
-      return true
+      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(newUser))
+
+      await AuthService.register(userData);
     } catch (error) {
       console.error("Erro no cadastro:", error)
-      return false
+      throw new Error(`${error}`);
     }
   }
 
-  const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
+  const updateProfile = async (userData: Partial<User>): Promise<void> => {
     try {
-      if (!user) return false
+      if (!user) throw new Error("O usuário não está logado")
 
       const updatedUser = { ...user, ...userData }
       setUser(updatedUser)
-      localStorage.setItem("maqexpress_user", JSON.stringify(updatedUser))
-      return true
+      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(updatedUser))
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error)
-      return false
     }
   }
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem("maqexpress_user")
+    localStorage.removeItem("MAQEXPRESS_USER")
   }
 
   return (

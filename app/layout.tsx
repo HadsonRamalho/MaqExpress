@@ -5,6 +5,7 @@ import type React from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
 	title: "MaqExpress - Locação de Máquinas e Equipamentos",
@@ -27,6 +28,7 @@ export default function RootLayout({
 					disableTransitionOnChange
 				>
 					<AuthProvider>{children}</AuthProvider>
+					<Toaster richColors={true} />
 				</ThemeProvider>
 			</body>
 		</html>

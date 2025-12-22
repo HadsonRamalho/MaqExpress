@@ -39,6 +39,7 @@ pub async fn extract_claims_from_header(
     let token = match token {
         Some(t) => t,
         None => {
+            error!("Token não está presente no header");
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ApiError::InvalidAuthorizationToken.to_string()),
@@ -56,7 +57,8 @@ pub async fn extract_claims_from_header(
 
     let claims = match decoded {
         Ok(data) => (token.to_string(), data.claims),
-        Err(_) => {
+        Err(e) => {
+            error!("Falha ao obter as claims do token: {}", e);
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ApiError::InvalidAuthorizationToken.to_string()),
@@ -94,6 +96,7 @@ pub async fn validate_claims(claims: &Claims) -> Result<StatusCode, (StatusCode,
         return Ok(StatusCode::OK);
     }
 
+    error!("Múltiplas falhas ao decodificar claims");
     Err((
         StatusCode::UNAUTHORIZED,
         Json(ApiError::MultipleAuthorizationErrors(errors).to_string()),
@@ -106,6 +109,7 @@ pub fn get_jwt_secret_from_env() -> Result<String, (StatusCode, Json<String>)> {
     match env::var("JWT_SECRET") {
         Ok(secret) => Ok(secret),
         Err(error) => {
+            error!("Erro ao obter JWT_SECRET do env");
             return Err((
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(ApiError::DatabaseConnection(error.to_string()).to_string()),
@@ -136,10 +140,50 @@ pub fn generate_jwt(input: InfoLoginUsuario) -> Result<String, (StatusCode, Json
         &EncodingKey::from_secret(secret.as_ref()),
     ) {
         Ok(token) => Ok(token),
-        Err(e) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::CreateToken(e.to_string()).to_string()),
-        )),
+        Err(e) => {
+            error!("Erro ao codificar o token JWT");
+
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::CreateToken(e.to_string()).to_string()),
+            ))
+        }
+    }
+}
+
+pub trait Sanitize {
+    fn sanitize(&mut self);
+}
+
+impl Sanitize for CadastrarUsuario {
+    fn sanitize(&mut self) {
+        self.email = self.email.trim().to_lowercase();
+        self.nome = self.nome.trim().to_string();
+        self.cpf = self.cpf.trim().to_string();
+    }
+}
+
+pub struct JsonValidado<T>(pub T);
+
+impl<T, S> FromRequest<S> for JsonValidado<T>
+where
+    T: DeserializeOwned + Validate + Sanitize + Send + Sync + 'static,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let Json(mut payload) = Json::<T>::from_request(req, state)
+            .await
+            .map_err(|err| (StatusCode::BAD_REQUEST, err.to_string()))?;
+
+        payload.sanitize();
+
+        if let Err(erros) = payload.validate() {
+            return Err((StatusCode::BAD_REQUEST, erros.to_string()));
+        }
+
+        Ok(JsonValidado(payload))
     }
 }
 
