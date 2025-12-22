@@ -1,25 +1,56 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "tipo_usuario"))]
+    pub struct TipoUsuario;
+}
+
 diesel::table! {
-    users (id) {
+    enderecos (id) {
         id -> Uuid,
-        public_id -> Int4,
+        id_usuario -> Uuid,
+        #[max_length = 16]
+        cep -> Varchar,
         #[max_length = 128]
-        name -> Varchar,
+        logradouro -> Varchar,
+        #[max_length = 64]
+        bairro -> Varchar,
+        #[max_length = 64]
+        cidade -> Varchar,
+        #[max_length = 16]
+        numero -> Varchar,
+        #[max_length = 64]
+        complemento -> Nullable<Varchar>,
+        data_cadastro -> Timestamp,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TipoUsuario;
+
+    usuarios (id) {
+        id -> Uuid,
+        id_publico -> Int4,
+        #[max_length = 128]
+        nome -> Varchar,
         #[max_length = 64]
         email -> Varchar,
         #[max_length = 32]
-        document -> Varchar,
+        cpf -> Varchar,
         #[max_length = 128]
-        password -> Varchar,
-        birthdate -> Date,
+        senha -> Varchar,
         #[max_length = 16]
-        login_type -> Varchar,
-        #[max_length = 16]
-        user_type -> Varchar,
-        is_active -> Bool,
-        create_date -> Timestamp,
-        update_date -> Timestamp,
-        deletion_date -> Nullable<Timestamp>,
+        tipo_login -> Varchar,
+        tipo_usuario -> TipoUsuario,
+        ativo -> Bool,
+        data_cadastro -> Timestamp,
+        data_atualizacao -> Timestamp,
+        data_delecao -> Nullable<Timestamp>,
     }
 }
+
+diesel::joinable!(enderecos -> usuarios (id_usuario));
+
+diesel::allow_tables_to_appear_in_same_query!(enderecos, usuarios,);
