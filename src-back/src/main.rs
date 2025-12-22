@@ -10,10 +10,10 @@ async fn main() {
     tracing_subscriber::fmt::init();
     let app = crate::routes::init_routes().await;
     let port = 3099;
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
-        .await
-        .unwrap();
+    let route = format!("0.0.0.0:{}", port);
+    let listener = tokio::net::TcpListener::bind(&route).await.unwrap();
     info!("Servidor rodando na porta {}", port);
+    info!("Documentação disponível na rota http://{}/docs", route);
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),

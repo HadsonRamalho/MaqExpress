@@ -3,15 +3,15 @@ use utoipa::{
     openapi::{self, Contact},
 };
 
-use crate::models::user::{LoginUser, RegisterUser};
+use crate::models::usuarios::{CadastrarUsuario, LoginUsuario};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::controllers::user::api_register_user,
-        crate::controllers::user::api_login_user,
+        crate::controllers::usuarios::api_register_user,
+        crate::controllers::usuarios::api_login_user,
     ),
-    components(schemas(RegisterUser, LoginUser))
+    components(schemas(CadastrarUsuario, LoginUsuario))
 )]
 pub struct ApiDoc;
 
@@ -24,7 +24,7 @@ pub fn get_api_docs() -> openapi::OpenApi {
     docs.info.contact = Some(contact);
     docs.info.license = None;
     docs.info.title = "MaqExpress API".to_string();
-    docs.info.version = "0.1.0".to_string();
+    docs.info.version = "2.0.0".to_string();
     docs.info.extensions = None;
     docs.info.terms_of_service = None;
     docs.external_docs = None;
