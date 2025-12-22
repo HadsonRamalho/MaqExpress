@@ -24,7 +24,7 @@ interface BankInfo {
 
 interface User {
   id: string
-  name: string
+  nome: string
   email: string
   phone?: string
   avatar?: string
@@ -57,11 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, senha: string): Promise<void> => {
     try {
       const mockUser: User = {
         id: "1",
-        name: "João Silva",
+        nome: "João Silva",
         email: email,
         phone: "(11) 99999-9999",
         avatar: "/diverse-profile-avatars.png",
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(mockUser)
       localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(mockUser))
 
-      await AuthService.login({ email, password });
+      await AuthService.login({ email, senha });
     } catch (error) {
       console.error("Erro no login:", error)
      }
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const newUser: User = {
         id: Date.now().toString(),
-        name: userData.name,
+        nome: userData.nome,
         email: userData.email,
         avatar: "/diverse-profile-avatars.png",
         useInternalPayment: true,
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser)
       localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(newUser))
 
-      await AuthService.register(userData);
+      await AuthService.cadastrar(userData);
     } catch (error) {
       console.error("Erro no cadastro:", error)
       throw new Error(`${error}`);

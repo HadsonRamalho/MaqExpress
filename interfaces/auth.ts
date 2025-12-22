@@ -1,14 +1,12 @@
 export interface Login {
 	email: string;
-	password: string;
+	senha: string;
 }
 
 export interface Register {
-	birthdate: string;
-	document: string;
+	cpf: string;
 	email: string;
-	name: string;
-	password: string;
-	login_type: string;
-	user_type: string;
+	nome: string;
+	senha: string;
+	tipo_login: string;
 }

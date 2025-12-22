@@ -10,6 +10,7 @@ use chrono::NaiveDateTime;
 use diesel::{
     ExpressionMethods, QueryDsl,
     prelude::{AsChangeset, Insertable, Queryable},
+    result::{DatabaseErrorKind, Error},
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use diesel_derive_enum::DbEnum;
@@ -184,6 +185,14 @@ pub async fn cadastrar_usuario(
         .await
     {
         Ok(_) => Ok(()),
+        Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, info)) => {
+            if let Some(constraint_name) = info.constraint_name() {
+                if constraint_name == "usuarios_email_unique" {
+                    return Err("Este e-mail já está cadastrado.".to_string());
+                }
+            }
+            Err("Erro de duplicidade no banco de dados".to_string())
+        }
         Err(e) => Err(e.to_string()),
     }
 }

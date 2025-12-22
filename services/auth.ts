@@ -3,7 +3,7 @@ import { BaseApi } from "./BaseApi";
 
 class AuthService extends BaseApi {
 	constructor() {
-		super("user");
+		super("usuario");
 	}
 
 	async login(data: Login) {
@@ -17,9 +17,9 @@ class AuthService extends BaseApi {
 		}
 	}
 
-	async register(data: Register) {
+	async cadastrar(data: Register) {
 		try{
-		const response = await this.api.post("/register", data);
+		const response = await this.api.post("/cadastrar", data);
 		const returnedData = response.data;
 		console.log(returnedData);
 		} catch(err){

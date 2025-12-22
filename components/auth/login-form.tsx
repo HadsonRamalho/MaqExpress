@@ -24,12 +24,13 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      // Simular login - em produção, fazer chamada para API
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const success = await login(email, password)
-      if (success) {
-        router.push("/minhas-maquinas")
+      await login(email, password)
+
+      const { user } = useAuth();
+      if (user){
+        router.push("/minhas-maquinas");
       }
     } catch (error) {
       console.error("Erro no login:", error)

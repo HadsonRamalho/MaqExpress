@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Phone, DockIcon } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -19,7 +19,7 @@ export function RegisterForm() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    document: "",
+    cpf: "",
     birthdate: "",
     login_type: "SYSTEM",
     user_type: "DEFAULT",
@@ -48,13 +48,11 @@ export function RegisterForm() {
 
     try {
       await register({
-          name: formData.name,
-          email: formData.email,
-          document: formData.document,
-          password: formData.password,
-          birthdate: "",
-          login_type: "",
-          user_type: ""
+        nome: formData.name,
+        email: formData.email,
+        cpf: formData.cpf,
+        senha: formData.password,
+        tipo_login: "sistema"
       })
 
       router.push("/minhas-maquinas")
@@ -112,15 +110,13 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Telefone</Label>
+            <Label htmlFor="cpf">CPF</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <DockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                id="phone"
-                type="tel"
-                placeholder="(11) 99999-9999"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
+                id="cpf"
+                value={formData.cpf}
+                onChange={(e) => handleInputChange("cpf", e.target.value)}
                 className="pl-10"
                 required
               />

@@ -183,9 +183,9 @@ export function ProfileSettings() {
           <div className="flex items-center gap-6">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={formData.avatar || user.avatar} alt={user.name} />
+                <AvatarImage src={formData.avatar || user.avatar} alt={user?.nome} />
                 <AvatarFallback className="text-2xl">
-                  {user.name
+                  {user?.nome
                     .split(" ")
                     .map((n) => n[0])
                     .join("")
@@ -201,7 +201,7 @@ export function ProfileSettings() {
               </Button>
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold">{user.name}</h2>
+              <h2 className="text-2xl font-bold">{user?.nome}</h2>
               <p className="text-muted-foreground">{user.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="secondary">Membro desde {new Date(user.createdAt).toLocaleDateString("pt-BR")}</Badge>
