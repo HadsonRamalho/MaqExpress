@@ -10,12 +10,9 @@ use axum::{Json, body::Body, extract::Request, middleware::Next, response::Respo
 use dotenvy::dotenv;
 use hyper::{HeaderMap, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode};
-<<<<<<< HEAD
-=======
 use serde::de::DeserializeOwned;
 use tracing::error;
 use validator::Validate;
->>>>>>> 4005f6e (feat: atualizando tipagem e validações de usuário)
 
 pub async fn jwt_auth(
     req: Request<Body>,
@@ -143,6 +140,42 @@ pub fn generate_jwt(input: InfoLoginUsuario) -> Result<String, (StatusCode, Json
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::CreateToken(e.to_string()).to_string()),
         )),
+    }
+}
+
+pub trait Sanitize {
+    fn sanitize(&mut self);
+}
+
+impl Sanitize for CadastrarUsuario {
+    fn sanitize(&mut self) {
+        self.email = self.email.trim().to_lowercase();
+        self.nome = self.nome.trim().to_string();
+        self.cpf = self.cpf.trim().to_string();
+    }
+}
+
+pub struct JsonValidado<T>(pub T);
+
+impl<T, S> FromRequest<S> for JsonValidado<T>
+where
+    T: DeserializeOwned + Validate + Sanitize + Send + Sync + 'static,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let Json(mut payload) = Json::<T>::from_request(req, state)
+            .await
+            .map_err(|err| (StatusCode::BAD_REQUEST, err.to_string()))?;
+
+        payload.sanitize();
+
+        if let Err(erros) = payload.validate() {
+            return Err((StatusCode::BAD_REQUEST, erros.to_string()));
+        }
+
+        Ok(JsonValidado(payload))
     }
 }
 
