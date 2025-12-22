@@ -2,7 +2,7 @@ use crate::controllers::jwt::jwt_auth;
 use crate::controllers::utils::get_database_url_from_env;
 use crate::models::error::ApiError;
 use crate::routes::docs::get_api_docs;
-use crate::routes::user::user_routes;
+use crate::routes::usuarios::user_routes;
 use axum::{Json, Router};
 use axum::{
     extract::DefaultBodyLimit,
@@ -26,7 +26,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 pub mod docs;
-pub mod user;
+pub mod usuarios;
 
 pub async fn print_protected_route()
 -> Result<(StatusCode, Json<String>), (StatusCode, Json<ApiError>)> {
@@ -78,7 +78,7 @@ pub async fn init_routes() -> Router {
 
         return Router::new()
             .nest("/api", app.into())
-            .nest("/api/user", user_routes().await.into())
+            .nest("/api/usuario", user_routes().await.into())
             .nest("/api", protected_routes(pool.clone()).into())
             .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", get_api_docs()))
             .with_state(pool)

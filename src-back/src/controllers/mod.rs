@@ -1,3 +1,3 @@
 pub mod jwt;
-pub mod user;
+pub mod usuarios;
 pub mod utils;

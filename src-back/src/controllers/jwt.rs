@@ -1,10 +1,21 @@
 use std::env;
 
-use crate::models::{error::ApiError, jwt::Claims, user::UserAuthInfo};
+use crate::models::{
+    error::ApiError,
+    jwt::Claims,
+    usuarios::{CadastrarUsuario, InfoLoginUsuario},
+};
+use axum::extract::FromRequest;
 use axum::{Json, body::Body, extract::Request, middleware::Next, response::Response};
 use dotenvy::dotenv;
 use hyper::{HeaderMap, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode};
+<<<<<<< HEAD
+=======
+use serde::de::DeserializeOwned;
+use tracing::error;
+use validator::Validate;
+>>>>>>> 4005f6e (feat: atualizando tipagem e validações de usuário)
 
 pub async fn jwt_auth(
     req: Request<Body>,
@@ -67,7 +78,7 @@ pub async fn validate_claims(claims: &Claims) -> Result<StatusCode, (StatusCode,
     if claims.id.to_string().trim().is_empty() {
         errors.push("Invalid ID".to_string())
     }
-    if claims.public_id.to_string().is_empty() {
+    if claims.id_publico.to_string().is_empty() {
         errors.push("Invalid Public ID".to_string())
     }
     if claims.email.is_empty() {
@@ -106,7 +117,7 @@ pub fn get_jwt_secret_from_env() -> Result<String, (StatusCode, Json<String>)> {
     }
 }
 
-pub fn generate_jwt(input: UserAuthInfo) -> Result<String, (StatusCode, Json<String>)> {
+pub fn generate_jwt(input: InfoLoginUsuario) -> Result<String, (StatusCode, Json<String>)> {
     let expiration = chrono::Utc::now()
         .checked_add_signed(chrono::Duration::hours(1))
         .expect("Invalid timestamp")
@@ -116,8 +127,8 @@ pub fn generate_jwt(input: UserAuthInfo) -> Result<String, (StatusCode, Json<Str
         id: input.id,
         email: input.email.to_string(),
         exp: expiration,
-        public_id: input.public_id,
-        user_type: input.user_type,
+        id_publico: input.id_publico,
+        tipo_usuario: input.tipo_usuario,
     };
 
     let secret = get_jwt_secret_from_env()?;
@@ -132,5 +143,41 @@ pub fn generate_jwt(input: UserAuthInfo) -> Result<String, (StatusCode, Json<Str
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::CreateToken(e.to_string()).to_string()),
         )),
+    }
+}
+
+pub trait Sanitize {
+    fn sanitize(&mut self);
+}
+
+impl Sanitize for CadastrarUsuario {
+    fn sanitize(&mut self) {
+        self.email = self.email.trim().to_lowercase();
+        self.nome = self.nome.trim().to_string();
+        self.cpf = self.cpf.trim().to_string();
+    }
+}
+
+pub struct JsonValidado<T>(pub T);
+
+impl<T, S> FromRequest<S> for JsonValidado<T>
+where
+    T: DeserializeOwned + Validate + Sanitize + Send + Sync + 'static,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let Json(mut payload) = Json::<T>::from_request(req, state)
+            .await
+            .map_err(|err| (StatusCode::BAD_REQUEST, err.to_string()))?;
+
+        payload.sanitize();
+
+        if let Err(erros) = payload.validate() {
+            return Err((StatusCode::BAD_REQUEST, erros.to_string()));
+        }
+
+        Ok(JsonValidado(payload))
     }
 }
