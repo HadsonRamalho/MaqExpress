@@ -48,7 +48,7 @@ pub fn protected_routes(pool: Pool<AsyncPgConnection>) -> OpenApiRouter<Pool<Asy
     protected_routes
 }
 
-pub fn establish_connection(config: &str) -> BoxFuture<ConnectionResult<AsyncPgConnection>> {
+pub fn establish_connection(config: &str) -> BoxFuture<'_, ConnectionResult<AsyncPgConnection>> {
     let fut = async {
         let rustls_config = ClientConfig::with_platform_verifier();
         let tls = tokio_postgres_rustls::MakeRustlsConnect::new(rustls_config.unwrap());
