@@ -11,7 +11,7 @@ use dotenvy::dotenv;
 use hyper::{HeaderMap, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode};
 use serde::de::DeserializeOwned;
-use tracing::error;
+
 use validator::Validate;
 
 pub async fn jwt_auth(
