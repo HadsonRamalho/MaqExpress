@@ -1,150 +1,86 @@
 "use client"
 
-import { Register } from "@/interfaces/auth"
-import { AuthService } from "@/services/auth"
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { UserId } from "@/interfaces/user";
+import { loginUser } from "@/services/api/user/user";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
-interface Address {
-  street: string
-  number: string
-  complement?: string
-  neighborhood: string
-  city: string
-  state: string
-  zipCode: string
+interface AuthCredentials {
+  email: string;
+  password: string;
 }
 
-interface BankInfo {
-  bank: string
-  agency: string
-  account: string
-  accountType: "corrente" | "poupanca"
-  pixKey?: string
+interface AuthContextData {
+  user: UserId | null;
+  signIn(credentials: AuthCredentials): void;
+  signOut(): void;
 }
 
-interface User {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  avatar?: string
-  address?: Address
-  bankInfo?: BankInfo
-  useInternalPayment: boolean
-  createdAt: string
-}
+const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-interface AuthContextType {
-  user: User | null
-  isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (userData: Register) => Promise<void>
-  updateProfile: (userData: Partial<User>) => Promise<void>
-  logout: () => void
-}
+export default function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<UserId | null>(() => {
+    const userId = localStorage.getItem("USER_ID");
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem("MAQEXPRESS_USER")
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
+    if (!userId) {
+      return null;
     }
-    setIsLoading(false)
-  }, [])
+    const user: UserId = {"idusuario": userId};
+    return user;
+  });
 
-  const login = async (email: string, password: string): Promise<void> => {
-    try {
-      const mockUser: User = {
-        id: "1",
-        name: "João Silva",
-        email: email,
-        phone: "(11) 99999-9999",
-        avatar: "/diverse-profile-avatars.png",
-        useInternalPayment: false,
-        createdAt: "2024-01-15",
-        address: {
-          street: "Rua das Flores",
-          number: "123",
-          complement: "Apto 45",
-          neighborhood: "Centro",
-          city: "São Paulo",
-          state: "SP",
-          zipCode: "01234-567",
-        },
-        bankInfo: {
-          bank: "Banco do Brasil",
-          agency: "1234-5",
-          account: "12345-6",
-          accountType: "corrente",
-          pixKey: "joao.silva@email.com",
-        },
+  const signIn = useCallback(async ({ email, password }: AuthCredentials) => {
+    try{
+      const data = await loginUser(email, password);
+
+      localStorage.setItem("USER_ID", data.idusuario);
+      setUser(data);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const statusCode = error.response?.status;
+
+      // Lança exceções com base no código de status
+      if (statusCode === 401) {
+        throw new Error("Credenciais inválidas. Verifique seu e-mail e senha.");
+      } else if (statusCode === 500) {
+        throw new Error("Erro no servidor. Por favor, tente novamente mais tarde.");
+      } else {
+        throw new Error(`Erro inesperado: ${statusCode || error.message}`);
       }
-
-      setUser(mockUser)
-      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(mockUser))
-
-      await AuthService.login({ email, password });
-    } catch (error) {
-      console.error("Erro no login:", error)
-     }
-  }
-
-  const register = async (userData: Register) : Promise<void> => {
-    try {
-      const newUser: User = {
-        id: Date.now().toString(),
-        name: userData.name,
-        email: userData.email,
-        avatar: "/diverse-profile-avatars.png",
-        useInternalPayment: true,
-        createdAt: new Date().toISOString().split("T")[0],
-      }
-
-      setUser(newUser)
-      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(newUser))
-
-      await AuthService.register(userData);
-    } catch (error) {
-      console.error("Erro no cadastro:", error)
-      throw new Error(`${error}`);
     }
-  }
+  }, []);
 
-  const updateProfile = async (userData: Partial<User>): Promise<void> => {
-    try {
-      if (!user) throw new Error("O usuário não está logado")
+  const signOut = useCallback(() => {
+    localStorage.removeItem("USER_ID");
+    setUser(null);
+  }, []);
 
-      const updatedUser = { ...user, ...userData }
-      setUser(updatedUser)
-      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(updatedUser))
-    } catch (error) {
-      console.error("Erro ao atualizar perfil:", error)
-    }
-  }
-
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("MAQEXPRESS_USER")
-  }
+  const providerData = useMemo(() => {
+    return {
+      user,
+      signIn,
+      signOut,
+    };
+  }, [user, signIn, signOut]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, updateProfile, logout }}>
-      {children}
-    </AuthContext.Provider>
-  )
+    <AuthContext.Provider value={providerData}>{children}</AuthContext.Provider>
+  );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
-}
+export function useAuth(): AuthContextData {
+  const context = useContext(AuthContext);
 
-export type { User, Address, BankInfo }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+
+  return context;
+}
