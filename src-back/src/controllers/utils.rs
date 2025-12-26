@@ -5,10 +5,11 @@ use dotenvy::dotenv;
 use hyper::StatusCode;
 use pwhash::bcrypt;
 use rand::Rng;
+use validator::ValidationError;
 
 use crate::models::error::ApiError;
 
-pub fn validate_cpf(cpf: &str) -> bool {
+pub fn validar_cpf(cpf: &str) -> Result<(), ValidationError> {
     let cpf: Vec<u8> = cpf
         .chars()
         .filter(|c| c.is_digit(10))
@@ -16,7 +17,7 @@ pub fn validate_cpf(cpf: &str) -> bool {
         .collect();
 
     if cpf.len() != 11 || cpf.iter().all(|&d| d == cpf[0]) {
-        return false;
+        return Err(ValidationError::new("O tamanho do CPF está incorreto"));
     }
 
     let soma1: u32 = cpf
@@ -37,7 +38,11 @@ pub fn validate_cpf(cpf: &str) -> bool {
 
     let dig2 = if soma2 % 11 < 2 { 0 } else { 11 - (soma2 % 11) };
 
-    cpf[9] == dig1 as u8 && cpf[10] == dig2 as u8
+    let valido = cpf[9] == dig1 as u8 && cpf[10] == dig2 as u8;
+    if !valido {
+        return Err(ValidationError::new("O CPF é inválido"));
+    }
+    Ok(())
 }
 
 pub fn validate_cnpj(cnpj: &str) -> bool {
@@ -142,6 +147,20 @@ pub fn get_database_url_from_env() -> Result<String, (StatusCode, Json<String>)>
     }
 }
 
+pub fn get_test_database_url_from_env() -> Result<String, (StatusCode, Json<String>)> {
+    dotenv().ok();
+
+    match env::var("TEST_DATABASE_URL") {
+        Ok(secret) => Ok(secret),
+        Err(error) => {
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ApiError::DatabaseConnection(error.to_string()).to_string()),
+            ));
+        }
+    }
+}
+
 pub fn get_frontend_url_from_env() -> Result<String, (StatusCode, Json<String>)> {
     dotenv().ok();
 
@@ -167,4 +186,45 @@ pub async fn get_conn(
     pool.get()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())))
+}
+
+pub fn gerar_cpf_valido() -> String {
+    let mut rng = rand::thread_rng();
+
+    let mut digitos: Vec<u32> = (0..9).map(|_| rng.gen_range(0..10)).collect();
+
+    let soma1: u32 = digitos
+        .iter()
+        .enumerate()
+        .map(|(i, &d)| d * (10 - i as u32))
+        .sum();
+
+    let resto1 = soma1 % 11;
+    let d1 = if resto1 < 2 { 0 } else { 11 - resto1 };
+    digitos.push(d1);
+
+    let soma2: u32 = digitos
+        .iter()
+        .enumerate()
+        .map(|(i, &d)| d * (11 - i as u32))
+        .sum();
+
+    let resto2 = soma2 % 11;
+    let d2 = if resto2 < 2 { 0 } else { 11 - resto2 };
+    digitos.push(d2);
+
+    format!(
+        "{}{}{}.{}{}{}.{}{}{}-{}{}",
+        digitos[0],
+        digitos[1],
+        digitos[2],
+        digitos[3],
+        digitos[4],
+        digitos[5],
+        digitos[6],
+        digitos[7],
+        digitos[8],
+        digitos[9],
+        digitos[10]
+    )
 }

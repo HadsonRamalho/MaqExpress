@@ -3,7 +3,7 @@ CREATE TABLE "usuarios"(
 	"id" UUID NOT NULL PRIMARY KEY,
 	"id_publico" INT4 NOT NULL,
 	"nome" VARCHAR(128) NOT NULL,
-	"email" VARCHAR(64) NOT NULL,
+	"email" VARCHAR(128) NOT NULL,
 	"cpf" VARCHAR(32) NOT NULL,
 	"senha" VARCHAR(128) NOT NULL,
 	"tipo_login" VARCHAR(16) NOT NULL,
@@ -17,6 +17,7 @@ CREATE TABLE "usuarios"(
 CREATE TABLE "enderecos"(
 	"id" UUID NOT NULL PRIMARY KEY,
 	"id_usuario" UUID NOT NULL,
+	"uf" VARCHAR(2) NOT NULL,
 	"cep" VARCHAR(16) NOT NULL,
 	"logradouro" VARCHAR(128) NOT NULL,
 	"bairro" VARCHAR(64) NOT NULL,
@@ -26,4 +27,3 @@ CREATE TABLE "enderecos"(
 	"data_cadastro" TIMESTAMP NOT NULL,
 	FOREIGN KEY ("id_usuario") REFERENCES "usuarios"("id")
 );
-

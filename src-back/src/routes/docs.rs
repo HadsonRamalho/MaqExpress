@@ -10,6 +10,8 @@ use crate::models::usuarios::{CadastrarUsuario, LoginUsuario};
     paths(
         crate::controllers::usuarios::api_register_user,
         crate::controllers::usuarios::api_login_user,
+        crate::controllers::usuarios::api_update_user_data,
+        crate::controllers::enderecos::api_cadastrar_endereco
     ),
     components(schemas(CadastrarUsuario, LoginUsuario))
 )]

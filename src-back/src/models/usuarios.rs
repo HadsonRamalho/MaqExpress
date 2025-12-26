@@ -1,25 +1,21 @@
+use crate::controllers::utils::validar_cpf;
+use crate::controllers::validadores::{Sanitize, Texto};
 use crate::{
-    controllers::{
-        jwt::Sanitize,
-        utils::{format_document, password_hash, random_public_id},
-    },
-    models::error::ApiError,
+    controllers::utils::{password_hash, random_public_id},
     schema::usuarios,
 };
 use chrono::NaiveDateTime;
 use diesel::{
     ExpressionMethods, QueryDsl,
-    prelude::{AsChangeset, Insertable, Queryable},
+    prelude::{AsChangeset, Insertable, Queryable, QueryableByName},
     result::{DatabaseErrorKind, Error},
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use tracing::error;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
-use validator::ValidateEmail;
 
 #[derive(DbEnum, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::TipoUsuario"]
@@ -28,7 +24,9 @@ pub enum TipoUsuario {
     Usuario,
 }
 
-#[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize, Debug, Clone)]
+#[derive(
+    Queryable, Insertable, AsChangeset, Serialize, Deserialize, Debug, Clone, QueryableByName,
+)]
 #[diesel(table_name = usuarios)]
 pub struct Usuario {
     pub id: Uuid,
@@ -66,60 +64,53 @@ impl From<Usuario> for InfoLoginUsuario {
 #[derive(Serialize, Deserialize, ToSchema, Validate)]
 pub struct CadastrarUsuario {
     #[validate(length(min = 1, message = "O nome não pode ser vazio"))]
-    pub nome: String,
+    pub nome: Texto,
     #[validate(email(message = "E-mail inválido"))]
-    pub email: String,
-    #[validate(length(min = 11, max = 14))]
-    pub cpf: String,
+    pub email: Texto,
+    #[validate(length(min = 11, max = 14), custom(function = "validar_cpf"))]
+    pub cpf: Texto,
     #[validate(length(min = 6, message = "Senha muito curta"))]
     pub senha: String,
     pub tipo_login: String,
 }
 
-#[derive(Serialize, Deserialize, Validate)]
-pub struct AtualizarUsuario {
+impl Sanitize for CadastrarUsuario {
+    fn sanitize(&mut self) {
+        self.email = Texto(self.email.trim().to_lowercase());
+    }
+}
+
+#[derive(Serialize, Deserialize, Validate, ToSchema)]
+pub struct AtualizarUsuarioDto {
     #[validate(length(min = 1, message = "O nome não pode ser vazio"))]
-    pub nome: String,
+    pub nome: Texto,
     #[validate(email(message = "E-mail inválido"))]
+    pub email: Texto,
+    #[validate(length(min = 11, max = 14), custom(function = "validar_cpf"))]
+    pub cpf: Texto,
+}
+
+impl Sanitize for AtualizarUsuarioDto {
+    fn sanitize(&mut self) {
+        self.email = Texto(self.email.trim().to_lowercase());
+    }
+}
+
+pub struct AtualizarUsuario {
+    pub id_usuario: Uuid,
+    pub nome: String,
     pub email: String,
-    #[validate(length(min = 11, max = 14))]
     pub cpf: String,
 }
 
-impl Sanitize for AtualizarUsuario {
-    fn sanitize(&mut self) {
-        self.email = self.email.trim().to_lowercase();
-        self.nome = self.nome.trim().to_string();
-        self.cpf = format_document(&self.cpf).unwrap_or(self.cpf.clone());
-    }
-}
-
-impl CadastrarUsuario {
-    pub fn validar_campos(self: &Self) -> bool {
-        if self.cpf.trim().is_empty()
-            || self.nome.trim().is_empty()
-            || self.email.trim().is_empty()
-            || self.senha.trim().is_empty()
-            || self.tipo_login.trim().is_empty()
-            || !self.email.validate_email()
-        {
-            error!("Ao menos um campo está vazio ao validar o cadastro do usuário.");
-            return false;
+impl AtualizarUsuario {
+    pub fn new(id_usuario: Uuid, dados: AtualizarUsuarioDto) -> Self {
+        Self {
+            id_usuario,
+            nome: dados.nome.into(),
+            email: dados.email.into(),
+            cpf: dados.cpf.into(),
         }
-        true
-    }
-
-    pub fn tratar_campos(self: &mut Self) -> Result<(), String> {
-        self.email = self.email.trim().to_string();
-        self.nome = self.nome.trim().to_string();
-        self.senha = password_hash(self.senha.trim());
-        self.tipo_login = self.tipo_login.trim().to_string();
-        self.cpf = match format_document(&self.cpf) {
-            Ok(cpf) => cpf,
-            Err(e) => return Err(e),
-        };
-
-        Ok(())
     }
 }
 
@@ -128,10 +119,10 @@ impl From<CadastrarUsuario> for Usuario {
         Self {
             id: Uuid::new_v4(),
             id_publico: random_public_id(),
-            nome: input.nome,
-            email: input.email,
-            cpf: input.cpf,
-            senha: input.senha,
+            nome: input.nome.into(),
+            email: input.email.into(),
+            cpf: input.cpf.into(),
+            senha: password_hash(&input.senha),
             tipo_login: input.tipo_login,
             tipo_usuario: TipoUsuario::Usuario,
             ativo: true,
@@ -145,32 +136,21 @@ impl From<CadastrarUsuario> for Usuario {
 #[derive(Serialize, Deserialize, ToSchema, Validate)]
 pub struct LoginUsuario {
     #[validate(email(message = "E-mail inválido"))]
-    pub email: String,
-    pub senha: String,
-}
-
-impl LoginUsuario {
-    pub fn validar_campos(self: &Self) -> Result<(), String> {
-        if self.email.trim().is_empty() || self.senha.trim().is_empty() {
-            return Err(ApiError::InvalidData.to_string());
-        }
-        if !self.email.validate_email() {
-            return Err(ApiError::InvalidEmail.to_string());
-        }
-        Ok(())
-    }
-
-    pub fn tratar_campos(self: &mut Self) {
-        self.email = self.email.trim().to_string();
-        self.senha = self.senha.trim().to_string();
-    }
+    pub email: Texto,
+    pub senha: Texto,
 }
 
 impl Sanitize for LoginUsuario {
     fn sanitize(&mut self) {
-        self.email = self.email.trim().to_lowercase();
-        self.senha = self.senha.trim().to_string();
+        self.email = Texto(self.email.trim().to_lowercase());
+        self.senha = Texto(self.senha.trim().to_string());
     }
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct RetornoLogin {
+    pub token: String,
+    pub nome: String,
 }
 
 pub async fn cadastrar_usuario(
@@ -247,22 +227,45 @@ pub async fn buscar_usuario_por_id_publico(
 
 pub async fn atualizar_usuario(
     conn: &mut AsyncPgConnection,
-    id_param: &Uuid,
-    data: &AtualizarUsuario,
-) -> Result<(), ApiError> {
+    usuario: &AtualizarUsuario,
+) -> Result<(), String> {
     use crate::schema::usuarios::dsl::*;
 
+    let usuario_com_email: Usuario = match usuarios
+        .filter(email.eq(&usuario.email))
+        .get_result(conn)
+        .await
+    {
+        Ok(usuario) => usuario,
+        Err(e) => return Err(e.to_string()),
+    };
+
+    if usuario_com_email.id != usuario.id_usuario.to_owned() {
+        return Err("Esse e-mail já pertence a outro usuário".to_string());
+    }
+
+    let usuario_com_cpf: Usuario =
+        match usuarios.filter(cpf.eq(&usuario.cpf)).get_result(conn).await {
+            Ok(usuario) => usuario,
+            Err(e) => return Err(e.to_string()),
+        };
+
+    if usuario_com_cpf.id != usuario.id_usuario.to_owned() {
+        return Err("Esse CPF já pertence a outro usuário".to_string());
+    }
+
     match diesel::update(usuarios)
-        .filter(id.eq(id_param))
+        .filter(id.eq(usuario.id_usuario))
         .set((
-            nome.eq(&data.nome),
-            email.eq(&data.email),
-            cpf.eq(&data.cpf),
+            nome.eq(&usuario.nome),
+            cpf.eq(&usuario.cpf),
+            email.eq(&usuario.email),
+            data_atualizacao.eq(chrono::Utc::now().naive_utc()),
         ))
         .execute(conn)
         .await
     {
         Ok(_) => Ok(()),
-        Err(e) => Err(ApiError::Database(e.to_string())),
+        Err(e) => Err(e.to_string()),
     }
 }

@@ -4,7 +4,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::controllers::usuarios::{api_login_user, api_register_user, api_update_user_data};
 
-pub async fn user_routes() -> OpenApiRouter<Pool<AsyncPgConnection>> {
+pub async fn rotas_usuario() -> OpenApiRouter<Pool<AsyncPgConnection>> {
     let routes = OpenApiRouter::new()
         .route("/cadastrar", post(api_register_user))
         .route("/login", post(api_login_user))

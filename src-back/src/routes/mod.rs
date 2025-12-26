@@ -1,8 +1,8 @@
 use crate::controllers::jwt::jwt_auth;
-use crate::controllers::utils::get_database_url_from_env;
 use crate::models::error::ApiError;
 use crate::routes::docs::get_api_docs;
-use crate::routes::usuarios::user_routes;
+use crate::routes::enderecos::rotas_endereco;
+use crate::routes::usuarios::rotas_usuario;
 use axum::{Json, Router};
 use axum::{
     extract::DefaultBodyLimit,
@@ -11,8 +11,6 @@ use axum::{
     routing::{get, get_service},
 };
 use diesel::{ConnectionError, ConnectionResult};
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-use diesel_async::pooled_connection::ManagerConfig;
 use diesel_async::{AsyncPgConnection, pooled_connection::deadpool::Pool};
 use futures_util::FutureExt;
 use futures_util::future::BoxFuture;
@@ -26,12 +24,8 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 pub mod docs;
+pub mod enderecos;
 pub mod usuarios;
-
-pub async fn print_protected_route()
--> Result<(StatusCode, Json<String>), (StatusCode, Json<ApiError>)> {
-    Ok((StatusCode::OK, Json("Protected route!".to_string())))
-}
 
 #[axum::debug_handler]
 pub async fn print_common_route() -> Result<(StatusCode, Json<String>), (StatusCode, Json<ApiError>)>
@@ -41,7 +35,6 @@ pub async fn print_common_route() -> Result<(StatusCode, Json<String>), (StatusC
 
 pub fn protected_routes(pool: Pool<AsyncPgConnection>) -> OpenApiRouter<Pool<AsyncPgConnection>> {
     let protected_routes = OpenApiRouter::new()
-        .route("/protected", get(print_protected_route))
         .layer(middleware::from_fn_with_state(pool.clone(), jwt_auth))
         .with_state(pool);
 
@@ -61,36 +54,27 @@ pub fn establish_connection(config: &str) -> BoxFuture<'_, ConnectionResult<Asyn
     fut.boxed()
 }
 
-pub async fn init_routes() -> Router {
-    let db_url = get_database_url_from_env().ok();
+pub type DbPool = Pool<AsyncPgConnection>;
 
-    let mut config = ManagerConfig::default();
-    config.custom_setup = Box::new(establish_connection);
+pub async fn new_init_routes(pool: DbPool) -> Router {
+    let app: OpenApiRouter<_> = OpenApiRouter::new()
+        .route("/common", get(print_common_route))
+        .nest_service("/imagens", get_service(ServeDir::new("./imagens")));
 
-    if let Some(db_url) = db_url {
-        let mgr =
-            AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(db_url, config);
-        let pool = Pool::builder(mgr).max_size(10).build().unwrap();
-
-        let app: OpenApiRouter<_> = OpenApiRouter::new()
-            .route("/common", get(print_common_route))
-            .nest_service("/images", get_service(ServeDir::new("./images")));
-
-        return Router::new()
-            .nest("/api", app.into())
-            .nest("/api/usuario", user_routes().await.into())
-            .nest("/api", protected_routes(pool.clone()).into())
-            .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", get_api_docs()))
-            .with_state(pool)
-            .layer(DefaultBodyLimit::max(1024 * 1024 * 100))
-            .layer(
-                CorsLayer::new()
-                    .allow_origin(vec![
-                        "http://localhost:3000".parse::<HeaderValue>().unwrap(),
-                    ])
-                    .allow_methods(Any)
-                    .allow_headers(vec![AUTHORIZATION, CONTENT_TYPE]),
-            );
-    }
     Router::new()
+        .nest("/api", app.into())
+        .nest("/api/usuario", rotas_usuario().await.into())
+        .nest("/api/endereco", rotas_endereco().await.into())
+        .nest("/api", protected_routes(pool.clone()).into())
+        .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", get_api_docs()))
+        .with_state(pool)
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 100))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(vec![
+                    "http://localhost:3000".parse::<HeaderValue>().unwrap(),
+                ])
+                .allow_methods(Any)
+                .allow_headers(vec![AUTHORIZATION, CONTENT_TYPE]),
+        )
 }

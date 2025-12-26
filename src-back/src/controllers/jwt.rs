@@ -1,28 +1,27 @@
-use std::env;
-
-use crate::models::{
-    error::ApiError,
-    jwt::Claims,
-    usuarios::{CadastrarUsuario, InfoLoginUsuario},
-};
-use axum::extract::FromRequest;
+use crate::controllers::utils::get_conn;
+use crate::models;
+use crate::models::{error::ApiError, jwt::Claims, usuarios::InfoLoginUsuario};
+use axum::extract::State;
 use axum::{Json, body::Body, extract::Request, middleware::Next, response::Response};
+use diesel_async::AsyncPgConnection;
+use diesel_async::pooled_connection::deadpool::Pool;
 use dotenvy::dotenv;
 use hyper::{HeaderMap, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode};
-use serde::de::DeserializeOwned;
+use std::env;
 use tracing::error;
-use validator::Validate;
 
 pub async fn jwt_auth(
+    State(pool): State<Pool<AsyncPgConnection>>,
     req: Request<Body>,
     next: Next,
 ) -> Result<Response, (StatusCode, Json<String>)> {
-    let _ = extract_claims_from_header(req.headers()).await?;
+    let _ = extract_claims_from_header(State(pool), req.headers()).await?;
     Ok(next.run(req).await)
 }
 
 pub async fn extract_claims_from_header(
+    State(pool): State<Pool<AsyncPgConnection>>,
     headers: &HeaderMap,
 ) -> Result<(String, Claims), (StatusCode, Json<String>)> {
     let auth_header = headers
@@ -66,12 +65,17 @@ pub async fn extract_claims_from_header(
         }
     };
 
-    let _ = validate_claims(&claims.1).await?;
+    let conn = &mut get_conn(&pool).await?;
+
+    let _ = validate_claims(conn, &claims.1).await?;
 
     Ok(claims)
 }
 
-pub async fn validate_claims(claims: &Claims) -> Result<StatusCode, (StatusCode, Json<String>)> {
+pub async fn validate_claims(
+    conn: &mut AsyncPgConnection,
+    claims: &Claims,
+) -> Result<StatusCode, (StatusCode, Json<String>)> {
     let mut errors = vec![];
 
     if claims.id.to_string().trim().is_empty() {
@@ -94,6 +98,13 @@ pub async fn validate_claims(claims: &Claims) -> Result<StatusCode, (StatusCode,
 
     if errors.is_empty() {
         return Ok(StatusCode::OK);
+    }
+
+    match models::usuarios::buscar_usuario_por_id(conn, &claims.id).await {
+        Err(e) => {
+            errors.push(format!("Usuário não encontrado: {}", e));
+        }
+        _ => {}
     }
 
     error!("Múltiplas falhas ao decodificar claims");
@@ -148,41 +159,5 @@ pub fn generate_jwt(input: InfoLoginUsuario) -> Result<String, (StatusCode, Json
                 Json(ApiError::CreateToken(e.to_string()).to_string()),
             ))
         }
-    }
-}
-
-pub trait Sanitize {
-    fn sanitize(&mut self);
-}
-
-impl Sanitize for CadastrarUsuario {
-    fn sanitize(&mut self) {
-        self.email = self.email.trim().to_lowercase();
-        self.nome = self.nome.trim().to_string();
-        self.cpf = self.cpf.trim().to_string();
-    }
-}
-
-pub struct JsonValidado<T>(pub T);
-
-impl<T, S> FromRequest<S> for JsonValidado<T>
-where
-    T: DeserializeOwned + Validate + Sanitize + Send + Sync + 'static,
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, String);
-
-    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
-        let Json(mut payload) = Json::<T>::from_request(req, state)
-            .await
-            .map_err(|err| (StatusCode::BAD_REQUEST, err.to_string()))?;
-
-        payload.sanitize();
-
-        if let Err(erros) = payload.validate() {
-            return Err((StatusCode::BAD_REQUEST, erros.to_string()));
-        }
-
-        Ok(JsonValidado(payload))
     }
 }

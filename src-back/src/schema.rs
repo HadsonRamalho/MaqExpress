@@ -23,6 +23,8 @@ diesel::table! {
         #[max_length = 64]
         complemento -> Nullable<Varchar>,
         data_cadastro -> Timestamp,
+        #[max_length = 2]
+        uf -> Varchar,
     }
 }
 
@@ -35,7 +37,7 @@ diesel::table! {
         id_publico -> Int4,
         #[max_length = 128]
         nome -> Varchar,
-        #[max_length = 64]
+        #[max_length = 128]
         email -> Varchar,
         #[max_length = 32]
         cpf -> Varchar,

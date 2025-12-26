@@ -5,13 +5,17 @@ use pwhash::bcrypt::verify;
 
 use crate::{
     controllers::{
-        jwt::{JsonValidado, extract_claims_from_header, generate_jwt},
+        jwt::{extract_claims_from_header, generate_jwt},
         utils::get_conn,
+        validadores::JsonValidado,
     },
     models::{
         self,
         error::ApiError,
-        usuarios::{AtualizarUsuario, CadastrarUsuario, InfoLoginUsuario, LoginUsuario, Usuario},
+        usuarios::{
+            AtualizarUsuario, AtualizarUsuarioDto, CadastrarUsuario, InfoLoginUsuario,
+            LoginUsuario, RetornoLogin, Usuario,
+        },
     },
 };
 #[utoipa::path(post, path = "/usuario/cadastrar", responses((status = CREATED, body = CadastrarUsuario)))]
@@ -29,12 +33,12 @@ pub async fn api_register_user(
     }
 }
 
-#[utoipa::path(post, path = "/user/login", responses((status = OK, body = LoginUsuario)))]
+#[utoipa::path(post, path = "/usuario/login", responses((status = OK, body = LoginUsuario)))]
 #[axum::debug_handler]
 pub async fn api_login_user(
     State(pool): State<Pool<AsyncPgConnection>>,
     JsonValidado(input): JsonValidado<LoginUsuario>,
-) -> Result<(StatusCode, Json<String>), (StatusCode, Json<String>)> {
+) -> Result<(StatusCode, Json<RetornoLogin>), (StatusCode, Json<String>)> {
     let user_input = input;
 
     let conn = &mut get_conn(&pool).await?;
@@ -58,8 +62,14 @@ pub async fn api_login_user(
 
     let token = generate_jwt(InfoLoginUsuario::from(user.clone()))?;
 
-    if verify(user_input.senha, &user.senha) {
-        return Ok((StatusCode::OK, Json(token)));
+    if verify(user_input.senha.to_string(), &user.senha) {
+        return Ok((
+            StatusCode::OK,
+            Json(RetornoLogin {
+                token,
+                nome: user.nome,
+            }),
+        ));
     }
 
     Err((
@@ -68,14 +78,18 @@ pub async fn api_login_user(
     ))
 }
 
+#[utoipa::path(patch, path = "/usuario/atualizar", responses((status = OK, body = AtualizarUsuarioDto)))]
 pub async fn api_update_user_data(
     State(pool): State<Pool<AsyncPgConnection>>,
     headers: HeaderMap,
-    JsonValidado(input): JsonValidado<AtualizarUsuario>,
+    JsonValidado(input): JsonValidado<AtualizarUsuarioDto>,
 ) -> Result<StatusCode, (StatusCode, Json<String>)> {
-    let id = extract_claims_from_header(&headers).await?.1.id;
-
     let conn = &mut get_conn(&pool).await?;
+
+    let id = extract_claims_from_header(State(pool), &headers)
+        .await?
+        .1
+        .id;
 
     match models::usuarios::buscar_usuario_por_id(conn, &id).await {
         Err(_) => {
@@ -87,9 +101,9 @@ pub async fn api_update_user_data(
         _ => {}
     };
 
-    let update_data = input;
+    let usuario = AtualizarUsuario::new(id, input);
 
-    match models::usuarios::atualizar_usuario(conn, &id, &update_data).await {
+    match models::usuarios::atualizar_usuario(conn, &usuario).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
     }

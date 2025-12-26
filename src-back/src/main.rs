@@ -1,14 +1,36 @@
-use tracing::info;
+use diesel_async::{
+    AsyncPgConnection,
+    pooled_connection::{AsyncDieselConnectionManager, ManagerConfig, deadpool::Pool},
+};
+use tracing::{error, info};
+
+use crate::{controllers::utils::get_database_url_from_env, routes::establish_connection};
 
 pub mod controllers;
 pub mod models;
 pub mod routes;
 pub mod schema;
+pub mod tests;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
     tracing_subscriber::fmt::init();
-    let app = crate::routes::init_routes().await;
+
+    let db_url = get_database_url_from_env().ok();
+
+    let mut config = ManagerConfig::default();
+    config.custom_setup = Box::new(establish_connection);
+
+    if db_url.is_none() {
+        error!("DB_URL não está definida no env");
+        return;
+    }
+
+    let mgr =
+        AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(db_url.unwrap(), config);
+    let pool = Pool::builder(mgr).max_size(10).build().unwrap();
+
+    let app = crate::routes::new_init_routes(pool).await;
     let port = 3099;
     let route = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&route).await.unwrap();
