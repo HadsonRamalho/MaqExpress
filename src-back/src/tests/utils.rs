@@ -67,13 +67,14 @@ pub async fn verificar_status_esperado(
     esperado: StatusCode,
     recebido: StatusCode,
     response: Response,
+    chamado_por: &str,
 ) -> bool {
     if esperado != recebido {
         let erro_body = response.text().await.unwrap_or_default();
 
         panic!(
-            "Esperado status [{}], recebido [{}].\nCorpo do erro: {}",
-            esperado, recebido, erro_body
+            "[{}] | Esperado status [{}], recebido [{}].\nCorpo do erro: {}",
+            chamado_por, esperado, recebido, erro_body
         );
     }
     true

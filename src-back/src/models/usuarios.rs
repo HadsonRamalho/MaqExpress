@@ -5,6 +5,7 @@ use crate::{
     schema::usuarios,
 };
 use chrono::NaiveDateTime;
+use diesel::prelude::Identifiable;
 use diesel::{
     ExpressionMethods, QueryDsl,
     prelude::{AsChangeset, Insertable, Queryable, QueryableByName},
@@ -25,7 +26,15 @@ pub enum TipoUsuario {
 }
 
 #[derive(
-    Queryable, Insertable, AsChangeset, Serialize, Deserialize, Debug, Clone, QueryableByName,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Identifiable,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    QueryableByName,
 )]
 #[diesel(table_name = usuarios)]
 pub struct Usuario {
@@ -151,6 +160,52 @@ impl Sanitize for LoginUsuario {
 pub struct RetornoLogin {
     pub token: String,
     pub nome: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PerfilPublicoUsuario {
+    pub id_publico: i32,
+    pub nome: String,
+    pub ativo: bool,
+    pub data_cadastro: String,
+}
+
+impl From<Usuario> for PerfilPublicoUsuario {
+    fn from(input: Usuario) -> Self {
+        Self {
+            id_publico: input.id_publico,
+            nome: input.nome,
+            ativo: input.ativo,
+            data_cadastro: input.data_cadastro.to_string(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PerfilPrivadoUsuario {
+    pub id_publico: i32,
+    pub nome: String,
+    pub email: String,
+    pub cpf: String,
+    pub tipo_login: String,
+    pub tipo_usuario: TipoUsuario,
+    pub ativo: bool,
+    pub data_cadastro: String,
+}
+
+impl From<Usuario> for PerfilPrivadoUsuario {
+    fn from(input: Usuario) -> Self {
+        Self {
+            id_publico: input.id_publico,
+            nome: input.nome,
+            ativo: input.ativo,
+            email: input.email,
+            cpf: input.cpf,
+            tipo_login: input.tipo_login,
+            tipo_usuario: input.tipo_usuario,
+            data_cadastro: input.data_cadastro.to_string(),
+        }
+    }
 }
 
 pub async fn cadastrar_usuario(

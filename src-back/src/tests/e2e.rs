@@ -35,7 +35,15 @@ async fn test_ciclo_vida_usuario_completo() {
 
     let status = response_cadastro.status();
 
-    assert!(verificar_status_esperado(StatusCode::CREATED, status, response_cadastro).await);
+    assert!(
+        verificar_status_esperado(
+            StatusCode::CREATED,
+            status,
+            response_cadastro,
+            "cadastro_usuario"
+        )
+        .await
+    );
 
     let response_login = client
         .post(format!("{}/api/usuario/login", app.address))
@@ -60,6 +68,44 @@ async fn test_ciclo_vida_usuario_completo() {
 
     println!("Token obtido com sucesso: {}", token);
 
+    let response_perfil_privado = client
+        .get(format!("{}/api/usuario/meu_perfil", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Falha na requisição de leitura do perfil privado");
+
+    let body_perfil_privado = crate::tests::utils::verificar_status_esperado_retornando_json(
+        reqwest::StatusCode::OK,
+        response_perfil_privado,
+    )
+    .await;
+
+    let id_publico = body_perfil_privado
+        .get("id_publico")
+        .and_then(|t| t.as_i64())
+        .expect("id_publico não encontrado na resposta do perfil privado.");
+
+    let response_perfil_publico = client
+        .get(format!(
+            "{}/api/usuario/perfil/?id={}",
+            app.address, id_publico
+        ))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Falha na requisição de leitura do perfil público");
+
+    assert!(
+        verificar_status_esperado(
+            StatusCode::OK,
+            response_perfil_publico.status(),
+            response_perfil_publico,
+            "perfil_publico"
+        )
+        .await
+    );
+
     let novo_nome = "Hadson Atualizado Reqwest";
 
     let response_update = client
@@ -75,7 +121,13 @@ async fn test_ciclo_vida_usuario_completo() {
         .expect("Falha na requisição de atualização");
 
     assert!(
-        verificar_status_esperado(StatusCode::OK, response_update.status(), response_update).await
+        verificar_status_esperado(
+            StatusCode::OK,
+            response_update.status(),
+            response_update,
+            "atualizar_perfil"
+        )
+        .await
     );
 
     let response_cadastro_endereco = client
@@ -97,7 +149,8 @@ async fn test_ciclo_vida_usuario_completo() {
         verificar_status_esperado(
             StatusCode::CREATED,
             response_cadastro_endereco.status(),
-            response_cadastro_endereco
+            response_cadastro_endereco,
+            "cadastro_endereco"
         )
         .await
     );

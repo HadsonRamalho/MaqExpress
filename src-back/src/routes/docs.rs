@@ -11,7 +11,9 @@ use crate::models::usuarios::{CadastrarUsuario, LoginUsuario};
         crate::controllers::usuarios::api_register_user,
         crate::controllers::usuarios::api_login_user,
         crate::controllers::usuarios::api_update_user_data,
-        crate::controllers::enderecos::api_cadastrar_endereco
+        crate::controllers::usuarios::api_buscar_perfil_publico_usuario,
+        crate::controllers::usuarios::api_buscar_perfil_privado_usuario,
+        crate::controllers::enderecos::api_cadastrar_endereco,
     ),
     components(schemas(CadastrarUsuario, LoginUsuario))
 )]

@@ -31,7 +31,15 @@ pub async fn cadastrar_usuario() {
 
     let status = response_cadastro.status();
 
-    assert!(verificar_status_esperado(StatusCode::CREATED, status, response_cadastro).await);
+    assert!(
+        verificar_status_esperado(
+            StatusCode::CREATED,
+            status,
+            response_cadastro,
+            "cadastrar_usuario"
+        )
+        .await
+    );
 
     let elapsed = format!(
         "Teste de Cadastro de Usuário finalizado em {}ms ({}s)",

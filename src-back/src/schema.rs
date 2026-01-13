@@ -7,9 +7,27 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    empresas (id) {
+        id -> Uuid,
+        id_publico -> Int4,
+        id_usuario -> Uuid,
+        #[max_length = 128]
+        nome -> Varchar,
+        #[max_length = 32]
+        cnpj -> Varchar,
+        ativo -> Bool,
+        data_cadastro -> Timestamp,
+        data_atualizacao -> Timestamp,
+        data_delecao -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     enderecos (id) {
         id -> Uuid,
         id_usuario -> Uuid,
+        #[max_length = 2]
+        uf -> Varchar,
         #[max_length = 16]
         cep -> Varchar,
         #[max_length = 128]
@@ -23,8 +41,24 @@ diesel::table! {
         #[max_length = 64]
         complemento -> Nullable<Varchar>,
         data_cadastro -> Timestamp,
-        #[max_length = 2]
-        uf -> Varchar,
+    }
+}
+
+diesel::table! {
+    maquinas (id) {
+        id -> Uuid,
+        id_publico -> Int4,
+        id_usuario -> Nullable<Uuid>,
+        id_empresa -> Nullable<Uuid>,
+        #[max_length = 128]
+        nome -> Varchar,
+        descricao -> Text,
+        #[max_length = 128]
+        numero_serie -> Varchar,
+        ativo -> Bool,
+        data_cadastro -> Timestamp,
+        data_atualizacao -> Timestamp,
+        data_delecao -> Nullable<Timestamp>,
     }
 }
 
@@ -55,4 +89,4 @@ diesel::table! {
 
 diesel::joinable!(enderecos -> usuarios (id_usuario));
 
-diesel::allow_tables_to_appear_in_same_query!(enderecos, usuarios,);
+diesel::allow_tables_to_appear_in_same_query!(empresas, enderecos, maquinas, usuarios,);

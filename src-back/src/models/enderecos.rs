@@ -1,17 +1,23 @@
 use crate::{
     controllers::validadores::{Sanitize, Texto},
+    models::usuarios::Usuario,
     schema::enderecos,
 };
 use chrono::NaiveDateTime;
-use diesel::prelude::{Insertable, Queryable};
+use diesel::prelude::*;
+use diesel::{
+    Selectable,
+    prelude::{Associations, Identifiable, Insertable, Queryable},
+};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Selectable, Insertable, Identifiable, Associations, Debug, Clone)]
 #[diesel(table_name = enderecos)]
+#[diesel(belongs_to(Usuario, foreign_key = id_usuario))]
 pub struct Endereco {
     pub id: Uuid,
     pub id_usuario: Uuid,
@@ -62,4 +68,16 @@ pub async fn cadastrar_endereco(
         Ok(_) => Ok(()),
         Err(e) => Err(e.to_string()),
     }
+}
+
+pub async fn buscar_endereco_usuario(
+    conn: &mut AsyncPgConnection,
+    usuario: &Usuario,
+) -> Result<Endereco, String> {
+    let endereco = Endereco::belonging_to(usuario)
+        .first::<Endereco>(conn)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(endereco)
 }
