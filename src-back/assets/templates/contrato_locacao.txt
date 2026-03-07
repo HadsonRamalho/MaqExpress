@@ -1,0 +1,26 @@
+CONTRATO DE LOCAÇÃO DE BENS MÓVEIS
+
+LOCADORA: {{nome_locador}}, inscrito no {{doc_tipo_locador}} sob o nº {{doc_locador}}, com endereço em {{rua_locador}}, {{cidade_locador}}/{{uf_locador}}, N° {{num_locador}} {{comp_locador}}.
+
+LOCATÁRIA: {{nome_locatario}}, inscrito no {{doc_tipo_locatario}} sob o nº {{doc_locatario}}, com endereço em {{rua_locatario}}, {{cidade_locatario}}/{{uf_locatario}}, N° {{num_locatario}} {{comp_locatario}}.
+
+Ambas as PARTES aqui representadas por quem de direito, têm justo e contratado entre si a celebração do presente Contrato de Locação de Bens Móveis.
+
+CLÁUSULA PRIMEIRA – DO OBJETO, PRAZO E USO
+1.1 A LOCADORA dará em locação à LOCATÁRIA o seguinte equipamento: {{maquina_nome}}, série {{maquina_serie}}, descrição: {{maquina_desc}}.
+1.1.1 O equipamento será retirado em: {{rua_retirada}}, {{num_retirada}}, {{bairro_retirada}}, {{cidade_retirada}}/{{uf_retirada}}.
+
+CLÁUSULA SEGUNDA – PRAZO DE VIGÊNCIA
+2.1 O prazo da presente locação inicia em {{data_inicio}} e finda em {{data_fim}}.
+
+CLAÚSULA TERCEIRA – DO VALOR E PAGAMENTO
+3.1 A LOCATÁRIA pagará à LOCADORA o valor total de {{valor_total}}.
+3.1.1 Dados Bancários para depósito: Banco {{banco_nome}}, Agência {{banco_ag}}, Conta {{banco_cc}}.
+
+CLAÚSULA DÉCIMA SEXTA – DA ELEIÇÃO DO FORO
+16.1 Fica eleito o foro da cidade de {{cidade_locador}}/{{uf_locador}}.
+
+{{cidade_locador}}, {{data_hoje}}.
+
+LOCADORA: _______________________________________
+LOCATÁRIA: _______________________________________

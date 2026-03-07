@@ -10,12 +10,14 @@ use diesel::{
     prelude::{Associations, Identifiable, Insertable, Queryable},
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-#[derive(Queryable, Selectable, Insertable, Identifiable, Associations, Debug, Clone)]
+#[derive(
+    Queryable, Serialize, Selectable, Insertable, Identifiable, Associations, Debug, Clone,
+)]
 #[diesel(table_name = enderecos)]
 #[diesel(belongs_to(Usuario, foreign_key = id_usuario))]
 pub struct Endereco {

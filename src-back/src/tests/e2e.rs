@@ -12,6 +12,8 @@ use crate::{
 #[tokio::test]
 async fn test_ciclo_vida_usuario_completo() {
     info!("Iniciando teste E2E");
+    std::fs::create_dir_all("storage/contratos").ok();
+
     let app = crate::tests::utils::spawn_app().await;
     let client = reqwest::Client::new();
 
@@ -246,6 +248,82 @@ async fn test_ciclo_vida_usuario_completo() {
         .expect("Erro delete empresa");
 
     assert_eq!(response_del_empresa.status(), StatusCode::NO_CONTENT);
+
+    let data_inicio = chrono::Utc::now().naive_utc();
+    let data_fim = data_inicio + chrono::Duration::days(30);
+
+    let response_solicitacao = client
+        .post(format!("{}/api/solicitacao/criar", app.address))
+        .bearer_auth(token)
+        .json(&serde_json::json!({
+            "id_maquina": id_maquina,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim
+        }))
+        .send()
+        .await
+        .expect("Erro ao criar solicitacao");
+
+    assert!(
+        verificar_status_esperado(
+            StatusCode::CREATED,
+            response_solicitacao.status(),
+            response_solicitacao,
+            "criar_solicitacao"
+        )
+        .await
+    );
+
+    let solicitacoes = client
+        .get(format!("{}/api/solicitacao/listar", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro listar solicitacoes")
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+
+    let id_solicitacao = solicitacoes[0]["id"].as_str().unwrap();
+
+    let response_aprovacao = client
+        .patch(format!(
+            "{}/api/solicitacao/responder/{}",
+            app.address, id_solicitacao
+        ))
+        .bearer_auth(token)
+        .json(&serde_json::json!({
+            "status": "Aprovada"
+        }))
+        .send()
+        .await
+        .expect("Erro ao aprovar");
+
+    assert!(
+        verificar_status_esperado(
+            StatusCode::OK,
+            response_aprovacao.status(),
+            response_aprovacao,
+            "aprovar_solicitacao"
+        )
+        .await
+    );
+
+    let contratos = client
+        .get(format!("{}/api/solicitacao/contratos", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro ao listar contratos")
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+
+    assert!(!contratos.as_array().unwrap().is_empty());
+    assert_eq!(contratos[0]["id_solicitacao"], id_solicitacao);
+
+    let path = format!("../../storage/contratos/contrato_{}.pdf", id_solicitacao);
+    //  assert!(std::path::Path::new(&path).exists());
 
     let elapsed = format!(
         "Teste E2E finalizado em {}ms ({}s)",

@@ -49,3 +49,4 @@ utoipa = "5.4.0"
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
+printpdf = "0.7.0"
