@@ -1,135 +1,85 @@
 "use client"
 
-import { Register } from "@/interfaces/auth"
-import { AuthService } from "@/services/auth"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-
-interface Address {
-  street: string
-  number: string
-  complement?: string
-  neighborhood: string
-  city: string
-  state: string
-  zipCode: string
-}
-
-interface BankInfo {
-  bank: string
-  agency: string
-  account: string
-  accountType: "corrente" | "poupanca"
-  pixKey?: string
-}
-
-interface User {
-  id: string
-  nome: string
-  email: string
-  phone?: string
-  avatar?: string
-  address?: Address
-  bankInfo?: BankInfo
-  useInternalPayment: boolean
-  createdAt: string
-}
+import { Register, PerfilPrivadoUsuario, Login } from "@/interfaces"
+import {serviceAutenticacao as AuthService } from "@/services/auth"
 
 interface AuthContextType {
-  user: User | null
+  user: PerfilPrivadoUsuario | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (data: Login) => Promise<void>
   register: (userData: Register) => Promise<void>
-  updateProfile: (userData: Partial<User>) => Promise<void>
+  updateProfile: (userData: Partial<PerfilPrivadoUsuario>) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<PerfilPrivadoUsuario | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("MAQEXPRESS_USER")
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
+    async function loadStorageData() {
+      const token = localStorage.getItem("MAQEXPRESS_TOKEN")
+
+      if (token) {
+        try {
+          const profile = await AuthService.meuPerfil()
+          setUser(profile)
+        } catch (error) {
+          localStorage.removeItem("MAQEXPRESS_TOKEN")
+          setUser(null)
+        }
+      }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    loadStorageData()
   }, [])
 
-  const login = async (email: string, senha: string): Promise<void> => {
+  const login = async (data: Login): Promise<void> => {
     try {
-      const mockUser: User = {
-        id: "1",
-        nome: "João Silva",
-        email: email,
-        phone: "(11) 99999-9999",
-        avatar: "/diverse-profile-avatars.png",
-        useInternalPayment: false,
-        createdAt: "2024-01-15",
-        address: {
-          street: "Rua das Flores",
-          number: "123",
-          complement: "Apto 45",
-          neighborhood: "Centro",
-          city: "São Paulo",
-          state: "SP",
-          zipCode: "01234-567",
-        },
-        bankInfo: {
-          bank: "Banco do Brasil",
-          agency: "1234-5",
-          account: "12345-6",
-          accountType: "corrente",
-          pixKey: "joao.silva@email.com",
-        },
-      }
+      const response = await AuthService.login(data)
 
-      setUser(mockUser)
-      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(mockUser))
+      localStorage.setItem("MAQEXPRESS_TOKEN", response.token)
 
-      await AuthService.login({ email, senha });
-    } catch (error) {
+      const profile = await AuthService.meuPerfil()
+
+      setUser(profile)
+    } catch (error: any) {
       console.error("Erro no login:", error)
-     }
-  }
-
-  const register = async (userData: Register) : Promise<void> => {
-    try {
-      const newUser: User = {
-        id: Date.now().toString(),
-        nome: userData.nome,
-        email: userData.email,
-        avatar: "/diverse-profile-avatars.png",
-        useInternalPayment: true,
-        createdAt: new Date().toISOString().split("T")[0],
-      }
-
-      setUser(newUser)
-      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(newUser))
-
-      await AuthService.cadastrar(userData);
-    } catch (error) {
-      console.error("Erro no cadastro:", error)
-      throw new Error(`${error}`);
+      throw error
     }
   }
 
-  const updateProfile = async (userData: Partial<User>): Promise<void> => {
+  const register = async (userData: Register): Promise<void> => {
     try {
-      if (!user) throw new Error("O usuário não está logado")
+      await AuthService.cadastrar(userData)
 
-      const updatedUser = { ...user, ...userData }
-      setUser(updatedUser)
-      localStorage.setItem("MAQEXPRESS_USER", JSON.stringify(updatedUser))
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro no cadastro:", error)
+      throw error
+    }
+  }
+
+  const updateProfile = async (userData: Partial<PerfilPrivadoUsuario>): Promise<void> => {
+    try {
+      if (!user) throw new Error("Usuário não autenticado")
+
+      await AuthService.atualizarPerfil(userData)
+
+      const updatedProfile = await AuthService.meuPerfil()
+      setUser(updatedProfile)
+    } catch (error: any) {
       console.error("Erro ao atualizar perfil:", error)
+      throw error
     }
   }
 
   const logout = () => {
+    localStorage.removeItem("MAQEXPRESS_TOKEN")
     setUser(null)
-    localStorage.removeItem("MAQEXPRESS_USER")
   }
 
   return (
@@ -146,5 +96,3 @@ export function useAuth() {
   }
   return context
 }
-
-export type { User, Address, BankInfo }

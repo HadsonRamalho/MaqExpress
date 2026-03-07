@@ -4,6 +4,7 @@ import { useParams } from "next/navigation"
 import { AddMachineForm } from "@/components/machines/add-machine-form"
 import { useAuth } from "@/hooks/use-auth"
 import { redirect } from "next/navigation"
+import { serviceMaquina } from "@/services/maquina"
 
 // Mock data - em produção, buscar da API
 const getMachineData = (id: string) => {
@@ -49,7 +50,7 @@ const getMachineData = (id: string) => {
   }
 }
 
-export default function EditMachinePage() {
+export default async function EditMachinePage() {
   const { user } = useAuth()
   const params = useParams()
   const machineId = params.id as string
@@ -58,7 +59,7 @@ export default function EditMachinePage() {
     redirect("/login")
   }
 
-  const machineData = getMachineData(machineId)
+  const machineData = (await serviceMaquina.listar()).find((m) => m.id === machineId);
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,7 +69,7 @@ export default function EditMachinePage() {
           <p className="text-muted-foreground mt-2">Atualize as informações da sua máquina</p>
         </div>
 
-        <AddMachineForm machineData={machineData} isEditing={true} />
+        <AddMachineForm initialData={machineData} isEditing={true} />
       </div>
     </div>
   )

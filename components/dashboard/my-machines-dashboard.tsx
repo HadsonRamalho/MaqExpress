@@ -36,7 +36,7 @@ export function MyMachinesDashboard() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold mb-2">Bem-vindo, {user?.name}!</h2>
+              <h2 className="text-xl font-semibold mb-2">Bem-vindo, {user?.nome}!</h2>
               <p className="text-primary-foreground/80">
                 Você tem equipamentos gerando renda. Continue expandindo seu negócio!
               </p>

@@ -1,17 +1,16 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Eye, EyeOff, Mail, Lock, User, Phone, DockIcon } from "lucide-react"
-import { useAuth } from "@/hooks/use-auth"
+import { Eye, EyeOff, Mail, Lock, User, DockIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { serviceAutenticacao } from "@/services/auth"
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -20,15 +19,11 @@ export function RegisterForm() {
     name: "",
     email: "",
     cpf: "",
-    birthdate: "",
-    login_type: "SYSTEM",
-    user_type: "DEFAULT",
     password: "",
     confirmPassword: "",
     acceptTerms: false,
   })
   const [isLoading, setIsLoading] = useState(false)
-  const { register } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,7 +42,7 @@ export function RegisterForm() {
     setIsLoading(true)
 
     try {
-      await register({
+      await serviceAutenticacao.cadastrar({
         nome: formData.name,
         email: formData.email,
         cpf: formData.cpf,
@@ -55,10 +50,10 @@ export function RegisterForm() {
         tipo_login: "sistema"
       })
 
-      router.push("/minhas-maquinas")
-    } catch (error) {
-      console.error("Erro no cadastro:", error)
-      toast.error(`Erro ao se cadastrar: ${JSON.parse(`${error}`).message}`);
+      toast.success("Conta criada com sucesso!")
+      router.push("/login")
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao realizar cadastro")
     } finally {
       setIsLoading(false)
     }
@@ -143,11 +138,7 @@ export function RegisterForm() {
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -172,11 +163,7 @@ export function RegisterForm() {
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -188,14 +175,7 @@ export function RegisterForm() {
               onCheckedChange={(checked) => handleInputChange("acceptTerms", checked as boolean)}
             />
             <Label htmlFor="terms" className="text-sm text-muted-foreground">
-              Aceito os{" "}
-              <Button variant="link" className="px-0 h-auto text-sm text-primary">
-                termos de uso
-              </Button>{" "}
-              e{" "}
-              <Button variant="link" className="px-0 h-auto text-sm text-primary">
-                política de privacidade
-              </Button>
+              Aceito os termos de uso e política de privacidade
             </Label>
           </div>
 

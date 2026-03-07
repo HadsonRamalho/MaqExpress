@@ -41,7 +41,7 @@ export default function MachinesPage() {
 
             {/* Machines List */}
             <div className="flex-1">
-              <MachinesList filters={filters} />
+              <MachinesList machines={[]} filters={filters} />
             </div>
           </div>
         </div>

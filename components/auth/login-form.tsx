@@ -26,7 +26,7 @@ export function LoginForm() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      await login(email, password)
+      await login({email, senha: password})
 
       const { user } = useAuth();
       if (user){
