@@ -155,6 +155,98 @@ async fn test_ciclo_vida_usuario_completo() {
         .await
     );
 
+    let response_cad_empresa = client
+        .post(format!("{}/api/empresa/cadastrar", app.address))
+        .bearer_auth(token)
+        .json(&serde_json::json!({
+            "nome": "Empresa Teste E2E",
+            "cnpj": "11.385.485/0001-03"
+        }))
+        .send()
+        .await
+        .expect("Erro requisição empresa");
+
+    assert!(
+        verificar_status_esperado(
+            StatusCode::CREATED,
+            response_cad_empresa.status(),
+            response_cad_empresa,
+            "cad_empresa"
+        )
+        .await
+    );
+
+    let empresas = client
+        .get(format!("{}/api/empresa/listar", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro listar empresa")
+        .json::<serde_json::Value>()
+        .await
+        .expect("Erro parse empresas");
+
+    let id_empresa = empresas[0]["id"].as_str().unwrap();
+
+    let response_cad_maquina = client
+        .post(format!("{}/api/maquina/cadastrar", app.address))
+        .bearer_auth(token)
+        .json(&serde_json::json!({
+            "nome": "Máquina Teste 01",
+            "descricao": "Desc",
+            "numero_serie": "SN123",
+            "id_empresa": id_empresa
+        }))
+        .send()
+        .await
+        .expect("Erro requisição máquina");
+
+    assert!(
+        verificar_status_esperado(
+            StatusCode::CREATED,
+            response_cad_maquina.status(),
+            response_cad_maquina,
+            "cad_maquina"
+        )
+        .await
+    );
+
+    let maquinas = client
+        .get(format!("{}/api/maquina/listar", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro listar máquinas")
+        .json::<serde_json::Value>()
+        .await
+        .expect("Erro parse máquinas");
+
+    let id_maquina = maquinas[0]["id"].as_str().unwrap();
+
+    let response_del_maquina = client
+        .delete(format!(
+            "{}/api/maquina/remover/{}",
+            app.address, id_maquina
+        ))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro delete máquina");
+
+    assert_eq!(response_del_maquina.status(), StatusCode::NO_CONTENT);
+
+    let response_del_empresa = client
+        .delete(format!(
+            "{}/api/empresa/remover/{}",
+            app.address, id_empresa
+        ))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro delete empresa");
+
+    assert_eq!(response_del_empresa.status(), StatusCode::NO_CONTENT);
+
     let elapsed = format!(
         "Teste E2E finalizado em {}ms ({}s)",
         instant.elapsed().as_millis(),

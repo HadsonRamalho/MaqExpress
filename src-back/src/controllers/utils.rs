@@ -45,7 +45,7 @@ pub fn validar_cpf(cpf: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
-pub fn validate_cnpj(cnpj: &str) -> bool {
+pub fn validate_cnpj(cnpj: &str) -> Result<(), ValidationError> {
     let cnpj: Vec<u8> = cnpj
         .chars()
         .filter(|c| c.is_digit(10))
@@ -53,7 +53,7 @@ pub fn validate_cnpj(cnpj: &str) -> bool {
         .collect();
 
     if cnpj.len() != 14 || cnpj.windows(2).all(|w| w[0] == w[1]) {
-        return false;
+        return Err(ValidationError::new("O CNPJ é inválido"));
     }
 
     let calc_digito = |slice: &[u8], pesos: &[u8]| -> u8 {
@@ -72,7 +72,10 @@ pub fn validate_cnpj(cnpj: &str) -> bool {
     let d1 = calc_digito(&cnpj[0..12], &pesos1);
     let d2 = calc_digito(&[&cnpj[0..12], &[d1]].concat(), &pesos2);
 
-    cnpj[12] == d1 && cnpj[13] == d2
+    if cnpj[12] == d1 && cnpj[13] == d2 {
+        return Ok(());
+    }
+    Err(ValidationError::new("O CNPJ digitado é inválido"))
 }
 
 pub fn format_cnpj(cnpj: &str) -> Result<String, String> {

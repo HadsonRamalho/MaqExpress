@@ -1,6 +1,6 @@
 use crate::controllers::validadores::{Sanitize, Texto};
 use crate::{
-    controllers::utils::{random_public_id, validar_cnpj},
+    controllers::utils::{random_public_id, validate_cnpj},
     schema::empresas,
 };
 use chrono::NaiveDateTime;
@@ -44,7 +44,7 @@ pub struct Empresa {
 pub struct CadastrarEmpresa {
     #[validate(length(min = 1, message = "O nome não pode ser vazio"))]
     pub nome: Texto,
-    #[validate(length(min = 14, max = 18), custom(function = "validar_cnpj"))]
+    #[validate(length(min = 14, max = 18), custom(function = "validate_cnpj"))]
     pub cnpj: Texto,
 }
 
@@ -59,7 +59,7 @@ impl Sanitize for CadastrarEmpresa {
 pub struct AtualizarEmpresaDto {
     #[validate(length(min = 1, message = "O nome não pode ser vazio"))]
     pub nome: Texto,
-    #[validate(length(min = 14, max = 18), custom(function = "validar_cnpj"))]
+    #[validate(length(min = 14, max = 18), custom(function = "validate_cnpj"))]
     pub cnpj: Texto,
     pub ativo: bool,
 }
@@ -162,6 +162,43 @@ pub async fn atualizar_empresa(
         .await
     {
         Ok(0) => Err("Empresa não encontrada ou você não tem permissão para editá-la".to_string()),
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn buscar_empresas_usuario(
+    conn: &mut AsyncPgConnection,
+    id_usr: &Uuid,
+) -> Result<Vec<Empresa>, String> {
+    use crate::schema::empresas::dsl::*;
+
+    match empresas
+        .filter(id_usuario.eq(id_usr))
+        .filter(data_delecao.is_null())
+        .load::<Empresa>(conn)
+        .await
+    {
+        Ok(lista) => Ok(lista),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn deletar_empresa(
+    conn: &mut AsyncPgConnection,
+    id_emp: &Uuid,
+    id_usr: &Uuid,
+) -> Result<(), String> {
+    use crate::schema::empresas::dsl::*;
+
+    match diesel::update(empresas)
+        .filter(id.eq(id_emp))
+        .filter(id_usuario.eq(id_usr))
+        .set(data_delecao.eq(chrono::Utc::now().naive_utc()))
+        .execute(conn)
+        .await
+    {
+        Ok(0) => Err("Empresa não encontrada ou permissão negada".to_string()),
         Ok(_) => Ok(()),
         Err(e) => Err(e.to_string()),
     }

@@ -159,12 +159,12 @@ pub async fn api_buscar_perfil_publico_usuario(
 ) -> Result<(StatusCode, Json<PerfilPublicoUsuario>), (StatusCode, Json<String>)> {
     let conn = &mut get_conn(&pool).await?;
 
-    let perfil = match models::usuarios::buscar_usuario_por_id_publico(
-        conn,
-        id.id.trim().parse::<i32>().unwrap(),
-    )
-    .await
-    {
+    let id = match id.id.trim().parse::<i32>() {
+        Ok(id) => id,
+        Err(e) => return Err((StatusCode::BAD_REQUEST, Json(e.to_string()))),
+    };
+
+    let perfil = match models::usuarios::buscar_usuario_por_id_publico(conn, id).await {
         Ok(usuario) => PerfilPublicoUsuario::from(usuario),
         Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
     };

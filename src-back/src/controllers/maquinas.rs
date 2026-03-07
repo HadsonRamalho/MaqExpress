@@ -25,7 +25,6 @@ use crate::{
         (status = 400, description = "Dados inválidos"),
         (status = 500, description = "Erro interno no servidor", body = String)
     ),
-    request_body = CadastrarMaquina
 )]
 pub async fn api_register_maquina(
     State(pool): State<Pool<AsyncPgConnection>>,
@@ -57,9 +56,8 @@ pub async fn api_register_maquina(
         (status = 500, description = "Máquina não encontrada ou erro interno", body = String)
     ),
     params(
-        ("id_maquina" = Uuid, Path, description = "UUID da Máquina")
+        ("id_maquina" = String, Path, description = "UUID da Máquina")
     ),
-    request_body = AtualizarMaquinaDto
 )]
 pub async fn api_update_maquina_data(
     State(pool): State<Pool<AsyncPgConnection>>,
@@ -78,6 +76,54 @@ pub async fn api_update_maquina_data(
 
     match models::maquinas::atualizar_maquina(conn, &maquina_atualizada).await {
         Ok(_) => Ok(StatusCode::OK),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/maquina/listar",
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Lista de máquinas do usuário"),
+    )
+)]
+pub async fn api_list_maquinas(
+    State(pool): State<Pool<AsyncPgConnection>>,
+    headers: HeaderMap,
+) -> Result<(StatusCode, Json<Vec<Maquina>>), (StatusCode, Json<String>)> {
+    let id_usuario = extract_claims_from_header(State(pool.clone()), &headers)
+        .await?
+        .1
+        .id;
+    let conn = &mut get_conn(&pool).await?;
+
+    match models::maquinas::buscar_maquinas_usuario(conn, &id_usuario).await {
+        Ok(lista) => Ok((StatusCode::OK, Json(lista))),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
+    }
+}
+
+#[utoipa::path(
+    delete,
+    path = "/maquina/remover/{id_maquina}",
+    security(("bearer_auth" = [])),
+    params(("id_maquina" = String, Path)),
+    responses((status = 204, description = "Removido"))
+)]
+pub async fn api_delete_maquina(
+    State(pool): State<Pool<AsyncPgConnection>>,
+    Path(id_maquina): Path<Uuid>,
+    headers: HeaderMap,
+) -> Result<StatusCode, (StatusCode, Json<String>)> {
+    let id_usuario = extract_claims_from_header(State(pool.clone()), &headers)
+        .await?
+        .1
+        .id;
+    let conn = &mut get_conn(&pool).await?;
+
+    match models::maquinas::deletar_maquina(conn, &id_maquina, &id_usuario).await {
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
     }
 }

@@ -5,11 +5,9 @@ use diesel::prelude::Identifiable;
 use diesel::{
     ExpressionMethods, QueryDsl,
     prelude::{AsChangeset, Insertable, Queryable, QueryableByName},
-    result::Error,
 };
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -39,7 +37,7 @@ pub struct Maquina {
     pub data_delecao: Option<NaiveDateTime>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Validate)]
+#[derive(Serialize, Deserialize, Validate)]
 pub struct CadastrarMaquina {
     #[validate(length(min = 1, message = "O nome não pode ser vazio"))]
     pub nome: Texto,
@@ -57,7 +55,7 @@ impl Sanitize for CadastrarMaquina {
     }
 }
 
-#[derive(Serialize, Deserialize, Validate, ToSchema)]
+#[derive(Serialize, Deserialize, Validate)]
 pub struct AtualizarMaquinaDto {
     #[validate(length(min = 1, message = "O nome não pode ser vazio"))]
     pub nome: Texto,
@@ -167,6 +165,43 @@ pub async fn atualizar_maquina(
         .await
     {
         Ok(0) => Err("Máquina não encontrada ou você não tem permissão para editá-la".to_string()),
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn buscar_maquinas_usuario(
+    conn: &mut AsyncPgConnection,
+    id_usr: &Uuid,
+) -> Result<Vec<Maquina>, String> {
+    use crate::schema::maquinas::dsl::*;
+
+    match maquinas
+        .filter(id_usuario.eq(id_usr))
+        .filter(data_delecao.is_null())
+        .load::<Maquina>(conn)
+        .await
+    {
+        Ok(lista) => Ok(lista),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn deletar_maquina(
+    conn: &mut AsyncPgConnection,
+    id_maq: &Uuid,
+    id_usr: &Uuid,
+) -> Result<(), String> {
+    use crate::schema::maquinas::dsl::*;
+
+    match diesel::update(maquinas)
+        .filter(id.eq(id_maq))
+        .filter(id_usuario.eq(id_usr))
+        .set(data_delecao.eq(chrono::Utc::now().naive_utc()))
+        .execute(conn)
+        .await
+    {
+        Ok(0) => Err("Máquina não encontrada ou permissão negada".to_string()),
         Ok(_) => Ok(()),
         Err(e) => Err(e.to_string()),
     }
