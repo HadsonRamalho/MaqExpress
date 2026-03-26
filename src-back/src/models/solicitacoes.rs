@@ -60,6 +60,7 @@ pub struct Contrato {
     pub id_solicitacao: Uuid,
     pub caminho_arquivo: String,
     pub data_geracao: NaiveDateTime,
+    pub tempo_geracao_ms: i64,
 }
 
 #[derive(Serialize, Deserialize, Validate)]
@@ -201,6 +202,7 @@ pub async fn gerar_e_salvar_contrato_pdf(
         id_solicitacao: solicitacao.id,
         caminho_arquivo: file_name.clone(),
         data_geracao: chrono::Utc::now().naive_utc(),
+        tempo_geracao_ms: 0,
     };
 
     use crate::schema::contratos::dsl::*;

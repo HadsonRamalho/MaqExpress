@@ -1,3 +1,4 @@
+pub mod relatorios;
 pub mod empresas;
 pub mod enderecos;
 pub mod jwt;

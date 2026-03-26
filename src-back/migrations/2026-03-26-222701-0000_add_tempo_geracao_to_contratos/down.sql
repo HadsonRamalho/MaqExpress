@@ -1,0 +1,1 @@
+ALTER TABLE contratos DROP COLUMN tempo_geracao_ms;

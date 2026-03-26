@@ -320,15 +320,77 @@ async fn test_ciclo_vida_usuario_completo() {
         .unwrap();
 
     assert!(!contratos.as_array().unwrap().is_empty());
-    assert_eq!(contratos[0]["id_solicitacao"], id_solicitacao);
+    let contrato = &contratos[0];
+    assert_eq!(contrato["id_solicitacao"], id_solicitacao);
 
-    let path = format!("../../storage/contratos/contrato_{}.pdf", id_solicitacao);
-    //  assert!(std::path::Path::new(&path).exists());
+    let tempo_geracao = contrato["tempo_geracao_ms"]
+        .as_i64()
+        .expect("tempo_geracao_ms não encontrado no contrato");
+    assert!(tempo_geracao >= 0);
+    info!("Tempo de geração do PDF registrado: {}ms", tempo_geracao);
 
+    let maquinas_pos_aprovacao = client
+        .get(format!("{}/api/maquina/listar", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro listar máquinas pós aprovação")
+        .json::<serde_json::Value>()
+        .await
+        .expect("Erro parse máquinas pós aprovação");
+
+    let maquina_solicitada = maquinas_pos_aprovacao
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["id"] == id_maquina)
+        .expect("Máquina não encontrada na listagem");
+
+    assert_eq!(
+        maquina_solicitada["ativo"], false,
+        "A máquina deveria estar desativada após aprovação do contrato"
+    );
+    info!(
+        "Confirmação: Máquina {} desativada com sucesso.",
+        id_maquina
+    );
+
+    let response_relatorio = client
+        .get(format!("{}/api/relatorios/performance", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .expect("Erro ao buscar relatório de performance");
+
+    assert_eq!(response_relatorio.status(), StatusCode::OK);
+    let relatorio = response_relatorio
+        .json::<serde_json::Value>()
+        .await
+        .unwrap();
+
+    assert!(relatorio["total_contratos_gerados"].as_i64().unwrap() >= 1);
+    assert!(relatorio["tempo_medio_geracao_ms"].as_f64().unwrap() >= 0.0);
+    info!("Relatório de performance validado: {:?}", relatorio);
+
+    let duration_ms = instant.elapsed().as_millis();
     let elapsed = format!(
         "Teste E2E finalizado em {}ms ({}s)",
-        instant.elapsed().as_millis(),
+        duration_ms,
         instant.elapsed().as_secs_f64()
     );
     info!(elapsed);
+
+    let metricas_teste = serde_json::json!({
+        "data": chrono::Utc::now().to_rfc3339(),
+        "duracao_total_teste_ms": duration_ms,
+        "tempo_geracao_pdf_ms": tempo_geracao,
+        "relatorio_performance": relatorio
+    });
+
+    std::fs::write(
+        "metrics/e2e_results.json",
+        serde_json::to_string_pretty(&metricas_teste).unwrap(),
+    )
+    .expect("Falha ao salvar métricas");
+    info!("Métricas salvas em metrics/e2e_results.json");
 }

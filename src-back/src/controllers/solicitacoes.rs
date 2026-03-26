@@ -122,6 +122,13 @@ pub async fn api_responder_solicitacao(
         if let Err(e) = gerar_e_salvar_contrato_pdf(conn, &solicitacao).await {
             return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e)));
         }
+
+        if let Err(e) =
+            models::maquinas::atualizar_status_ativo_maquina(conn, &solicitacao.id_maquina, false)
+                .await
+        {
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e)));
+        }
     }
 
     Ok(StatusCode::OK)
@@ -199,6 +206,7 @@ pub async fn gerar_e_salvar_contrato_pdf(
     conn: &mut AsyncPgConnection,
     solicitacao: &SolicitacaoContrato,
 ) -> Result<(), String> {
+    let start = tokio::time::Instant::now();
     let d = buscar_dados_contrato(conn, &solicitacao.id).await?;
     let id_s = solicitacao.id;
 
@@ -312,11 +320,14 @@ pub async fn gerar_e_salvar_contrato_pdf(
     .await
     .map_err(|e| e.to_string())??;
 
+    let duration = start.elapsed().as_millis() as i64;
+
     let novo_contrato = Contrato {
         id: Uuid::new_v4(),
         id_solicitacao: solicitacao.id,
         caminho_arquivo: file_path,
         data_geracao: chrono::Utc::now().naive_utc(),
+        tempo_geracao_ms: duration,
     };
 
     use crate::schema::contratos::dsl::*;

@@ -22,7 +22,7 @@ hyper = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenvy = "0.15"
-tower-http = { version = "0.6.1", features = ["cors", "fs"] }
+tower-http = { version = "0.6.1", features = ["cors", "fs", "trace"] }
 validator = { version = "0.20", features = ["derive"] }
 dotenv = "0.15.0"
 pwhash = "1"

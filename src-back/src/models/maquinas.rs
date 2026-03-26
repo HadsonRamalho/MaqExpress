@@ -187,21 +187,22 @@ pub async fn buscar_maquinas_usuario(
     }
 }
 
-pub async fn deletar_maquina(
+pub async fn atualizar_status_ativo_maquina(
     conn: &mut AsyncPgConnection,
     id_maq: &Uuid,
-    id_usr: &Uuid,
+    novo_status: bool,
 ) -> Result<(), String> {
     use crate::schema::maquinas::dsl::*;
 
-    match diesel::update(maquinas)
-        .filter(id.eq(id_maq))
-        .filter(id_usuario.eq(id_usr))
-        .set(data_delecao.eq(chrono::Utc::now().naive_utc()))
+    match diesel::update(maquinas.filter(id.eq(id_maq)))
+        .set((
+            ativo.eq(novo_status),
+            data_atualizacao.eq(chrono::Utc::now().naive_utc()),
+        ))
         .execute(conn)
         .await
     {
-        Ok(0) => Err("Máquina não encontrada ou permissão negada".to_string()),
+        Ok(0) => Err("Máquina não encontrada".to_string()),
         Ok(_) => Ok(()),
         Err(e) => Err(e.to_string()),
     }

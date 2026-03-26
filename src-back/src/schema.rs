@@ -11,6 +11,7 @@ diesel::table! {
         #[max_length = 255]
         caminho_arquivo -> Varchar,
         data_geracao -> Timestamp,
+        tempo_geracao_ms -> Int8,
     }
 }
 

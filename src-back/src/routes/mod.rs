@@ -4,6 +4,7 @@ use crate::routes::docs::get_api_docs;
 use crate::routes::empresas::rotas_empresa;
 use crate::routes::enderecos::rotas_endereco;
 use crate::routes::maquinas::rotas_maquina;
+use crate::routes::relatorios::rotas_relatorio;
 use crate::routes::solicitacoes::rotas_solicitacao;
 use crate::routes::usuarios::rotas_usuario;
 use axum::{Json, Router};
@@ -23,6 +24,7 @@ use rustls::ClientConfig;
 use rustls_platform_verifier::ConfigVerifierExt;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
+use tower_http::trace::TraceLayer;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -30,6 +32,7 @@ pub mod docs;
 pub mod empresas;
 pub mod enderecos;
 pub mod maquinas;
+pub mod relatorios;
 pub mod solicitacoes;
 pub mod usuarios;
 
@@ -74,9 +77,11 @@ pub async fn new_init_routes(pool: DbPool) -> Router {
         .nest("/api/empresa", rotas_empresa().await.into())
         .nest("/api/maquina", rotas_maquina().await.into())
         .nest("/api/solicitacao", rotas_solicitacao().await.into())
+        .nest("/api/relatorios", rotas_relatorio().into())
         .nest("/api", protected_routes(pool.clone()).into())
         .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", get_api_docs()))
         .with_state(pool)
+        .layer(TraceLayer::new_for_http())
         .layer(DefaultBodyLimit::max(1024 * 1024 * 100))
         .layer(
             CorsLayer::new()

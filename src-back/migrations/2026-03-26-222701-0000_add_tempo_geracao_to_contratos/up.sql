@@ -1,0 +1,1 @@
+ALTER TABLE contratos ADD COLUMN tempo_geracao_ms BIGINT DEFAULT 0 NOT NULL;
