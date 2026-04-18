@@ -1,5 +1,7 @@
+// @generated automatically by Diesel CLI.
+
 pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "tipo_usuario"))]
     pub struct TipoUsuario;
 }
@@ -111,10 +113,12 @@ diesel::table! {
 }
 
 diesel::joinable!(contratos -> solicitacoes_contrato (id_solicitacao));
+diesel::joinable!(empresas -> usuarios (id_usuario));
 diesel::joinable!(enderecos -> usuarios (id_usuario));
+diesel::joinable!(maquinas -> empresas (id_empresa));
+diesel::joinable!(maquinas -> usuarios (id_usuario));
 diesel::joinable!(solicitacoes_contrato -> maquinas (id_maquina));
 diesel::joinable!(solicitacoes_contrato -> usuarios (id_usuario_solicitante));
-diesel::joinable!(maquinas -> empresas (id_empresa));
 
 diesel::allow_tables_to_appear_in_same_query!(
     contratos,

@@ -8,12 +8,15 @@ CREATE TABLE solicitacoes_contrato(
     "data_inicio" TIMESTAMP NOT NULL,
     "data_fim" TIMESTAMP NOT NULL,
     "data_criacao" TIMESTAMP NOT NULL,
-    "data_atualizacao" TIMESTAMP NOT NULL
+    "data_atualizacao" TIMESTAMP NOT NULL,
+    FOREIGN KEY ("id_maquina") REFERENCES "maquinas"("id"),
+    FOREIGN KEY ("id_usuario_solicitante") REFERENCES "usuarios"("id")
 );
 
 CREATE TABLE contratos(
     "id" UUID NOT NULL PRIMARY KEY,
     "id_solicitacao" UUID NOT NULL,
     "caminho_arquivo" VARCHAR(255) NOT NULL,
-    "data_geracao" TIMESTAMP NOT NULL
+    "data_geracao" TIMESTAMP NOT NULL,
+    FOREIGN KEY ("id_solicitacao") REFERENCES "solicitacoes_contrato"("id")
 );
