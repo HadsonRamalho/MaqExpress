@@ -1,7 +1,9 @@
 use crate::controllers::validadores::{Sanitize, Texto};
+use crate::models::empresas::Empresa;
+use crate::models::usuarios::Usuario;
 use crate::{controllers::utils::random_public_id, schema::maquinas};
 use chrono::NaiveDateTime;
-use diesel::prelude::Identifiable;
+use diesel::prelude::{Associations, Identifiable};
 use diesel::{
     ExpressionMethods, QueryDsl,
     prelude::{AsChangeset, Insertable, Queryable, QueryableByName},
@@ -16,6 +18,7 @@ use validator::Validate;
     Insertable,
     AsChangeset,
     Identifiable,
+    Associations,
     Serialize,
     Deserialize,
     Debug,
@@ -23,6 +26,8 @@ use validator::Validate;
     QueryableByName,
 )]
 #[diesel(table_name = maquinas)]
+#[diesel(belongs_to(Usuario, foreign_key = id_usuario))]
+#[diesel(belongs_to(Empresa, foreign_key = id_empresa))]
 pub struct Maquina {
     pub id: Uuid,
     pub id_publico: i32,

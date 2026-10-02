@@ -1,13 +1,14 @@
 use crate::controllers::validadores::Sanitize;
 use crate::models::enderecos::{Endereco, buscar_endereco_usuario};
-use crate::models::usuarios;
+use crate::models::maquinas::Maquina;
+use crate::models::usuarios::{self, Usuario};
 use crate::{
     controllers::utils::random_public_id,
     schema::{contratos, solicitacoes_contrato},
 };
 use chrono::NaiveDateTime;
 use diesel::alias;
-use diesel::prelude::Identifiable;
+use diesel::prelude::{Associations, Identifiable};
 use diesel::{
     ExpressionMethods, QueryDsl,
     prelude::{AsChangeset, Insertable, Queryable, QueryableByName},
@@ -24,6 +25,7 @@ use validator::Validate;
     Insertable,
     AsChangeset,
     Identifiable,
+    Associations,
     Serialize,
     Deserialize,
     Debug,
@@ -31,6 +33,8 @@ use validator::Validate;
     QueryableByName,
 )]
 #[diesel(table_name = solicitacoes_contrato)]
+#[diesel(belongs_to(Maquina, foreign_key = id_maquina))]
+#[diesel(belongs_to(Usuario, foreign_key = id_usuario_solicitante))]
 pub struct SolicitacaoContrato {
     pub id: Uuid,
     pub id_publico: i32,
@@ -48,6 +52,7 @@ pub struct SolicitacaoContrato {
     Insertable,
     AsChangeset,
     Identifiable,
+    Associations,
     Serialize,
     Deserialize,
     Debug,
@@ -55,6 +60,7 @@ pub struct SolicitacaoContrato {
     QueryableByName,
 )]
 #[diesel(table_name = contratos)]
+#[diesel(belongs_to(SolicitacaoContrato, foreign_key = id_solicitacao))]
 pub struct Contrato {
     pub id: Uuid,
     pub id_solicitacao: Uuid,
