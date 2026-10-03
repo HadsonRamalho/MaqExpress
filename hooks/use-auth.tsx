@@ -1,8 +1,25 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import type { Register, PerfilPrivadoUsuario, Login } from "@/interfaces";
+import { type Register, type PerfilPrivadoUsuario, type Login, TipoUsuario } from "@/interfaces";
 import { serviceAutenticacao as AuthService } from "@/services/auth";
+
+// TEMPORÁRIO: libera login/cadastro sem backend nem validação, só para testar o
+// frontend mais rápido. Remover (voltar a false) quando o backend estiver no ar.
+const DEV_AUTH_BYPASS = true;
+
+function usuarioDev(email?: string): PerfilPrivadoUsuario {
+	return {
+		id_publico: 1,
+		nome: email ? email.split("@")[0] : "Usuário Teste",
+		email: email || "teste@maqexpress.com",
+		cpf: "00000000000",
+		tipo_login: "email",
+		tipo_usuario: TipoUsuario.Usuario,
+		ativo: true,
+		data_cadastro: new Date().toISOString(),
+	};
+}
 
 interface AuthContextType {
 	user: PerfilPrivadoUsuario | null;
@@ -24,6 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			const token = localStorage.getItem("MAQEXPRESS_TOKEN");
 
 			if (token) {
+				if (DEV_AUTH_BYPASS) {
+					setUser(usuarioDev(localStorage.getItem("MAQEXPRESS_DEV_EMAIL") ?? undefined));
+					setIsLoading(false);
+					return;
+				}
 				try {
 					const profile = await AuthService.meuPerfil();
 					setUser(profile);
@@ -39,6 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const login = async (data: Login): Promise<void> => {
+		if (DEV_AUTH_BYPASS) {
+			localStorage.setItem("MAQEXPRESS_TOKEN", "dev-token");
+			localStorage.setItem("MAQEXPRESS_DEV_EMAIL", data.email || "");
+			setUser(usuarioDev(data.email));
+			return;
+		}
 		try {
 			const response = await AuthService.login(data);
 
@@ -54,6 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	};
 
 	const register = async (userData: Register): Promise<void> => {
+		if (DEV_AUTH_BYPASS) {
+			localStorage.setItem("MAQEXPRESS_TOKEN", "dev-token");
+			localStorage.setItem("MAQEXPRESS_DEV_EMAIL", userData.email || "");
+			setUser(usuarioDev(userData.email));
+			return;
+		}
 		try {
 			await AuthService.cadastrar(userData);
 		} catch (error) {
@@ -78,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const logout = () => {
 		localStorage.removeItem("MAQEXPRESS_TOKEN");
+		localStorage.removeItem("MAQEXPRESS_DEV_EMAIL");
 		setUser(null);
 	};
 

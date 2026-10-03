@@ -1,11 +1,5 @@
 import { BaseApi } from "./BaseApi";
-import type {
-	Login,
-	Register,
-	RetornoLogin,
-	Usuario,
-	PerfilPublicoUsuario,
-} from "@/interfaces";
+import type { Login, Register, RetornoLogin, Usuario, PerfilPublicoUsuario } from "@/interfaces";
 
 class AuthService extends BaseApi {
 	constructor() {

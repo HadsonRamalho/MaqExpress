@@ -28,14 +28,7 @@ export default function CadastroPage() {
 
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (form.senha !== form.confirmar) {
-			toast.error("As senhas não conferem.");
-			return;
-		}
-		if (form.senha.length < 8) {
-			toast.error("A senha precisa ter ao menos 8 caracteres.");
-			return;
-		}
+		// Validação desligada temporariamente (modo de teste): entra direto.
 		setEnviando(true);
 		try {
 			await register({
@@ -45,8 +38,8 @@ export default function CadastroPage() {
 				senha: form.senha,
 				tipo_login: "email",
 			});
-			toast.success("Conta criada! Faça login para continuar.");
-			router.push("/login");
+			toast.success("Conta criada!");
+			router.push("/minhas-maquinas");
 		} catch {
 			toast.error("Não foi possível criar a conta. Tente novamente.");
 		} finally {
@@ -66,7 +59,6 @@ export default function CadastroPage() {
 					<Label htmlFor="nome">Nome completo</Label>
 					<Input
 						id="nome"
-						required
 						value={form.nome}
 						onChange={(e) => set("nome", e.target.value)}
 						placeholder="Como devemos te chamar"
@@ -77,7 +69,6 @@ export default function CadastroPage() {
 					<Label htmlFor="cpf">CPF</Label>
 					<Input
 						id="cpf"
-						required
 						inputMode="numeric"
 						value={form.cpf}
 						onChange={(e) => set("cpf", e.target.value)}
@@ -91,7 +82,6 @@ export default function CadastroPage() {
 						id="email"
 						type="email"
 						autoComplete="email"
-						required
 						value={form.email}
 						onChange={(e) => set("email", e.target.value)}
 						placeholder="voce@email.com"
@@ -105,7 +95,6 @@ export default function CadastroPage() {
 							id="senha"
 							type="password"
 							autoComplete="new-password"
-							required
 							value={form.senha}
 							onChange={(e) => set("senha", e.target.value)}
 							placeholder="Mín. 8 caracteres"
@@ -117,7 +106,6 @@ export default function CadastroPage() {
 							id="confirmar"
 							type="password"
 							autoComplete="new-password"
-							required
 							value={form.confirmar}
 							onChange={(e) => set("confirmar", e.target.value)}
 							placeholder="Repita a senha"
