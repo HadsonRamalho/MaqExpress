@@ -21,3 +21,4 @@ Nome do arquivo: `NNNN-titulo-curto-em-kebab.md`, `NNNN` sequencial de quatro d�
 | ADR | Título | Status |
 |---|---|---|
 | [0001](0001-organizacao-backend-por-dominio.md) | Organização do backend por domínio, não por camada | Aceita |
+| [0006](0006-tratamento-de-erro-frontend-catcher.md) | Tratamento de erro no frontend com `@catcherjs/core` | Aceita |
