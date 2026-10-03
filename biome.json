@@ -1,0 +1,33 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.5/schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": {
+		"includes": [
+			"app/**",
+			"components/**",
+			"hooks/**",
+			"lib/**",
+			"services/**",
+			"interfaces/**",
+			"!components/ui",
+			"!hooks/use-toast.ts",
+			"!**/*.css",
+			"!**/*.d.ts"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 100
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": { "source": { "organizeImports": "off" } }
+	}
+}

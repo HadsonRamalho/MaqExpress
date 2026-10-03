@@ -37,8 +37,8 @@ export default function HomePage() {
 							A máquina certa para sua obra, sem burocracia.
 						</h1>
 						<p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-							Alugue equipamentos direto com quem tem, perto de você. Contrato
-							digital, pagamento seguro e as datas que você precisa.
+							Alugue equipamentos direto com quem tem, perto de você. Contrato digital, pagamento
+							seguro e as datas que você precisa.
 						</p>
 						<div className="mt-8 max-w-2xl">
 							<HeroSearch />
@@ -67,10 +67,7 @@ export default function HomePage() {
 					<h2 className="text-2xl font-bold tracking-tight text-foreground">
 						Buscar por categoria
 					</h2>
-					<Link
-						href="/maquinas"
-						className="text-sm font-medium text-primary hover:underline"
-					>
+					<Link href="/maquinas" className="text-sm font-medium text-primary hover:underline">
 						Ver todas
 					</Link>
 				</div>
@@ -102,10 +99,7 @@ export default function HomePage() {
 						<h2 className="text-2xl font-bold tracking-tight text-foreground">
 							Máquinas em destaque
 						</h2>
-						<Link
-							href="/maquinas"
-							className="text-sm font-medium text-primary hover:underline"
-						>
+						<Link href="/maquinas" className="text-sm font-medium text-primary hover:underline">
 							Ver todas
 						</Link>
 					</div>
@@ -119,9 +113,7 @@ export default function HomePage() {
 
 			{/* Como funciona */}
 			<section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-				<h2 className="text-2xl font-bold tracking-tight text-foreground">
-					Como funciona
-				</h2>
+				<h2 className="text-2xl font-bold tracking-tight text-foreground">Como funciona</h2>
 				<ol className="mt-8 grid gap-8 md:grid-cols-3">
 					{passos.map((passo, i) => {
 						const Icon = passo.icon;
@@ -133,12 +125,8 @@ export default function HomePage() {
 									</span>
 									<Icon className="size-5 text-primary" />
 								</div>
-								<h3 className="mt-4 text-lg font-semibold text-foreground">
-									{passo.titulo}
-								</h3>
-								<p className="mt-1.5 leading-relaxed text-muted-foreground">
-									{passo.texto}
-								</p>
+								<h3 className="mt-4 text-lg font-semibold text-foreground">{passo.titulo}</h3>
+								<p className="mt-1.5 leading-relaxed text-muted-foreground">{passo.texto}</p>
 							</li>
 						);
 					})}
@@ -154,8 +142,7 @@ export default function HomePage() {
 						</h2>
 						<p className="mt-2 flex items-center gap-2 text-muted-foreground">
 							<ShieldCheck className="size-5 text-primary" />
-							Você define o preço e a disponibilidade. A gente cuida do contrato e
-							do pagamento.
+							Você define o preço e a disponibilidade. A gente cuida do contrato e do pagamento.
 						</p>
 					</div>
 					<Button asChild size="lg">

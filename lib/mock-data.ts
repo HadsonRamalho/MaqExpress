@@ -162,7 +162,7 @@ export const maquinas: MaquinaMock[] = [
 		nome: "Motosserra 62 cc",
 		categoriaSlug: "ferramentas",
 		categoriaNome: "Ferramentas",
-		descricao: "Sabre de 20\", corte de médio porte.",
+		descricao: 'Sabre de 20", corte de médio porte.',
 		precoDia: 60,
 		cidade: "Dourados",
 		uf: "MS",
@@ -181,3 +181,73 @@ export function formatarBRL(valor: number): string {
 		maximumFractionDigits: 0,
 	});
 }
+
+/** Comissão do marketplace sobre cada locação (ver ADR de pagamentos — Mercado Pago). */
+export const COMISSAO_PERCENT = 12;
+
+export function getMaquina(id: string): MaquinaMock | undefined {
+	return maquinas.find((m) => m.id === id);
+}
+
+/** Subconjunto tratado como "minhas máquinas" do locador logado (mock). */
+export const minhasMaquinas: MaquinaMock[] = maquinas.filter((m) =>
+	["Terra Forte Locações", "Construmaq"].includes(m.locador),
+);
+
+export type StatusSolicitacao = "pendente" | "aceita" | "paga" | "recusada" | "concluida";
+
+export interface SolicitacaoMock {
+	id: string;
+	maquinaId: string;
+	maquinaNome: string;
+	solicitante: string;
+	dataInicio: string;
+	dataFim: string;
+	dias: number;
+	valorTotal: number;
+	status: StatusSolicitacao;
+}
+
+export const solicitacoesRecebidas: SolicitacaoMock[] = [
+	{
+		id: "sol-1021",
+		maquinaId: "esc-cat-320",
+		maquinaNome: "Escavadeira hidráulica CAT 320",
+		solicitante: "João Obras ME",
+		dataInicio: "2026-10-08",
+		dataFim: "2026-10-12",
+		dias: 4,
+		valorTotal: 5000,
+		status: "pendente",
+	},
+	{
+		id: "sol-1019",
+		maquinaId: "moto-120k",
+		maquinaNome: "Motoniveladora 120K",
+		solicitante: "Construtora Horizonte",
+		dataInicio: "2026-10-05",
+		dataFim: "2026-10-06",
+		dias: 2,
+		valorTotal: 2980,
+		status: "aceita",
+	},
+	{
+		id: "sol-1012",
+		maquinaId: "retro-jcb-3cx",
+		maquinaNome: "Retroescavadeira JCB 3CX",
+		solicitante: "Ana Paula Terraplanagem",
+		dataInicio: "2026-09-28",
+		dataFim: "2026-10-02",
+		dias: 5,
+		valorTotal: 3900,
+		status: "concluida",
+	},
+];
+
+export const statusLabel: Record<StatusSolicitacao, string> = {
+	pendente: "Pendente",
+	aceita: "Aceita — aguardando pagamento",
+	paga: "Paga",
+	recusada: "Recusada",
+	concluida: "Concluída",
+};

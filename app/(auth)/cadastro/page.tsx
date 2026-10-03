@@ -56,9 +56,7 @@ export default function CadastroPage() {
 
 	return (
 		<div>
-			<h1 className="text-2xl font-bold tracking-tight text-foreground">
-				Criar conta
-			</h1>
+			<h1 className="text-2xl font-bold tracking-tight text-foreground">Criar conta</h1>
 			<p className="mt-1 text-sm text-muted-foreground">
 				Leva menos de um minuto. Depois é só alugar ou anunciar.
 			</p>

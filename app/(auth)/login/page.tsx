@@ -33,9 +33,7 @@ export default function LoginPage() {
 
 	return (
 		<div>
-			<h1 className="text-2xl font-bold tracking-tight text-foreground">
-				Entrar
-			</h1>
+			<h1 className="text-2xl font-bold tracking-tight text-foreground">Entrar</h1>
 			<p className="mt-1 text-sm text-muted-foreground">
 				Acesse sua conta para alugar ou gerenciar suas máquinas.
 			</p>
@@ -57,10 +55,7 @@ export default function LoginPage() {
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
 						<Label htmlFor="senha">Senha</Label>
-						<Link
-							href="/recuperar-senha"
-							className="text-sm text-primary hover:underline"
-						>
+						<Link href="/recuperar-senha" className="text-sm text-primary hover:underline">
 							Esqueci a senha
 						</Link>
 					</div>

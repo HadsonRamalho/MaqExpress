@@ -7,11 +7,9 @@ import { cn } from "@/lib/utils";
 export function MaqExpressLogo({ className }: { className?: string }) {
 	return (
 		<span className={cn("flex items-center gap-2", className)}>
-			<span
-				aria-hidden
-				className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"
-			>
+			<span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
 				<svg
+					aria-hidden="true"
 					viewBox="0 0 24 24"
 					className="size-5"
 					fill="none"

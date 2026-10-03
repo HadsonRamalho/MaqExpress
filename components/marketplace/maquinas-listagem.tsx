@@ -15,13 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MachineCard } from "@/components/marketplace/machine-card";
 import { categorias, formatarBRL, maquinas } from "@/lib/mock-data";
 
@@ -76,9 +70,7 @@ function Filtros({
 			<div>
 				<div className="flex items-center justify-between">
 					<h3 className="text-sm font-semibold text-foreground">Preço por dia</h3>
-					<span className="text-sm text-muted-foreground">
-						até {formatarBRL(precoMax)}
-					</span>
+					<span className="text-sm text-muted-foreground">até {formatarBRL(precoMax)}</span>
 				</div>
 				<Slider
 					value={[precoMax]}
@@ -125,8 +117,7 @@ export function MaquinasListagem() {
 
 	const resultado = useMemo(() => {
 		let lista = maquinas.filter((m) => {
-			if (categoriasSel.length && !categoriasSel.includes(m.categoriaSlug))
-				return false;
+			if (categoriasSel.length && !categoriasSel.includes(m.categoriaSlug)) return false;
 			if (m.precoDia > precoMax) return false;
 			if (somenteDisponiveis && !m.disponivel) return false;
 			if (busca.trim()) {
@@ -192,10 +183,7 @@ export function MaquinasListagem() {
 						</SheetContent>
 					</Sheet>
 
-					<Select
-						value={ordenacao}
-						onValueChange={(v) => setOrdenacao(v as Ordenacao)}
-					>
+					<Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as Ordenacao)}>
 						<SelectTrigger className="w-[190px]">
 							<SelectValue placeholder="Ordenar" />
 						</SelectTrigger>
@@ -219,16 +207,12 @@ export function MaquinasListagem() {
 				<div>
 					<p className="mb-4 text-sm text-muted-foreground">
 						{resultado.length}{" "}
-						{resultado.length === 1
-							? "máquina encontrada"
-							: "máquinas encontradas"}
+						{resultado.length === 1 ? "máquina encontrada" : "máquinas encontradas"}
 					</p>
 
 					{resultado.length === 0 ? (
 						<div className="rounded-xl border border-dashed border-border p-12 text-center">
-							<p className="font-medium text-foreground">
-								Nenhuma máquina encontrada.
-							</p>
+							<p className="font-medium text-foreground">Nenhuma máquina encontrada.</p>
 							<p className="mt-1 text-sm text-muted-foreground">
 								Ajuste os filtros ou amplie a faixa de preço.
 							</p>

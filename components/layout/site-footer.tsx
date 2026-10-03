@@ -35,16 +35,14 @@ export function SiteFooter() {
 				<div className="max-w-xs">
 					<MaqExpressLogo />
 					<p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-						Alugue a máquina certa para sua obra, direto com quem tem. Busca
-						simples, contrato digital e pagamento seguro.
+						Alugue a máquina certa para sua obra, direto com quem tem. Busca simples, contrato
+						digital e pagamento seguro.
 					</p>
 				</div>
 
 				{colunas.map((coluna) => (
 					<div key={coluna.titulo}>
-						<h3 className="text-sm font-semibold text-foreground">
-							{coluna.titulo}
-						</h3>
+						<h3 className="text-sm font-semibold text-foreground">{coluna.titulo}</h3>
 						<ul className="mt-4 space-y-3">
 							{coluna.links.map((link) => (
 								<li key={link.href}>

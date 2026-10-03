@@ -16,7 +16,8 @@ export function GoogleButton({ label }: { label: string }) {
 			className="w-full"
 			onClick={() => toast.info("Login com Google chega em breve.")}
 		>
-			<svg className="size-4" viewBox="0 0 24 24" aria-hidden>
+			<svg className="size-4" viewBox="0 0 24 24" role="img" aria-label="Google">
+				<title>Google</title>
 				<path
 					fill="#4285F4"
 					d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z"

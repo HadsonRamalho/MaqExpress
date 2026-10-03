@@ -1,19 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/components/ui/sheet";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MaqExpressLogo } from "@/components/layout/logo";
 
 const navLinks = [
@@ -21,6 +24,77 @@ const navLinks = [
 	{ href: "/como-funciona", label: "Como funciona" },
 	{ href: "/sobre-nos", label: "Sobre nós" },
 ];
+
+function iniciais(nome?: string) {
+	if (!nome) return "?";
+	return nome
+		.trim()
+		.split(/\s+/)
+		.slice(0, 2)
+		.map((p) => p[0]?.toUpperCase())
+		.join("");
+}
+
+function MenuUsuario() {
+	const { user, logout } = useAuth();
+	const router = useRouter();
+
+	if (!user) {
+		return (
+			<Button asChild variant="ghost">
+				<Link href="/login">Entrar</Link>
+			</Button>
+		);
+	}
+
+	function sair() {
+		logout();
+		router.push("/");
+	}
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<button
+					type="button"
+					className="flex items-center gap-2 rounded-full p-1 pr-3 transition-colors hover:bg-muted"
+				>
+					<Avatar className="size-8">
+						<AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+							{iniciais(user.nome)}
+						</AvatarFallback>
+					</Avatar>
+					<span className="max-w-28 truncate text-sm font-medium text-foreground">
+						{user.nome?.split(" ")[0] ?? "Conta"}
+					</span>
+				</button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="w-52">
+				<DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+					{user.email}
+				</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<DropdownMenuItem asChild>
+					<Link href="/minhas-maquinas">
+						<LayoutDashboard className="size-4" />
+						Meu painel
+					</Link>
+				</DropdownMenuItem>
+				<DropdownMenuItem asChild>
+					<Link href="/perfil">
+						<User className="size-4" />
+						Perfil
+					</Link>
+				</DropdownMenuItem>
+				<DropdownMenuSeparator />
+				<DropdownMenuItem onSelect={sair}>
+					<LogOut className="size-4" />
+					Sair
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
 
 export function SiteHeader() {
 	const pathname = usePathname();
@@ -53,15 +127,7 @@ export function SiteHeader() {
 				</nav>
 
 				<div className="ml-auto hidden items-center gap-2 md:flex">
-					{user ? (
-						<Button asChild variant="ghost">
-							<Link href="/minhas-maquinas">Meu painel</Link>
-						</Button>
-					) : (
-						<Button asChild variant="ghost">
-							<Link href="/login">Entrar</Link>
-						</Button>
-					)}
+					<MenuUsuario />
 					<Button asChild>
 						<Link href="/cadastrar-maquina">Anunciar máquina</Link>
 					</Button>

@@ -5,7 +5,9 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "lint": "biome check",
+    "format": "biome format --write",
+    "types:check": "tsc --noEmit",
     "start": "next start"
   },
   "dependencies": {

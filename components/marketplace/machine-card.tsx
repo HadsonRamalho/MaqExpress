@@ -29,9 +29,7 @@ export function MachineCard({ maquina }: { maquina: MaquinaMock }) {
 
 			<div className="flex flex-1 flex-col p-4">
 				<div className="flex items-center justify-between gap-2">
-					<span className="text-xs font-medium text-muted-foreground">
-						{maquina.categoriaNome}
-					</span>
+					<span className="text-xs font-medium text-muted-foreground">{maquina.categoriaNome}</span>
 					<span className="flex items-center gap-1 text-xs font-medium text-foreground">
 						<Star className="size-3.5 fill-primary text-primary" />
 						{maquina.nota.toFixed(1)}

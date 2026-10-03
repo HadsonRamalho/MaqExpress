@@ -3,11 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MaqExpressLogo } from "@/components/layout/logo";
 
-export default function AuthLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="grid min-h-dvh lg:grid-cols-2">
 			{/* Painel de marca (desktop) */}
