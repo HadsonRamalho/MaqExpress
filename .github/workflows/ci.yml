@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'src-back/**'
+            frontend:
+              - '!src-back/**'
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # TODO(refatoração): habilitar quando os scripts existirem em package.json
+      #   - run: npm run types:check   # "tsc --noEmit" (ver docs/architecture/frontend-rules.md)
+      #   - run: npm test              # Vitest (ver docs/architecture/testing.md)
+
+  rust:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: maqexpress
+          POSTGRES_PASSWORD: maqexpress
+          POSTGRES_DB: maqexpress_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://maqexpress:maqexpress@localhost:5432/maqexpress_test
+      TEST_DATABASE_URL: postgres://maqexpress:maqexpress@localhost:5432/maqexpress_test
+      JWT_SECRET: ci-only-not-a-real-secret
+      FRONTEND_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-back
+      - run: cargo fmt --all --check --manifest-path src-back/Cargo.toml
+      - run: cargo clippy --all-targets --manifest-path src-back/Cargo.toml -- -D warnings
+      - run: cargo test --manifest-path src-back/Cargo.toml
