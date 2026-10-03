@@ -4,7 +4,8 @@ use hyper::StatusCode;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{controllers::utils::gerar_cpf_valido, tests::utils::verificar_status_esperado};
+use crate::shared::utils::gerar_cpf_valido;
+use crate::tests::utils::verificar_status_esperado;
 
 #[tokio::test]
 pub async fn cadastrar_usuario() {

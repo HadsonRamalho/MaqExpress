@@ -9,10 +9,8 @@ use tokio::net::TcpListener;
 use tokio::spawn;
 use tracing::error;
 
-use crate::{
-    controllers::utils::get_test_database_url_from_env,
-    routes::{DbPool, establish_connection},
-};
+use crate::server::{DbPool, establish_connection};
+use crate::shared::utils::get_test_database_url_from_env;
 
 #[derive(Clone)]
 pub struct TestApp {
@@ -38,7 +36,7 @@ pub async fn spawn_app() -> TestApp {
         AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(db_url.unwrap(), config);
     let pool = Pool::builder(mgr).max_size(10).build().unwrap();
 
-    let app = crate::routes::new_init_routes(pool.clone()).await;
+    let app = crate::server::new_init_routes(pool.clone()).await;
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
 

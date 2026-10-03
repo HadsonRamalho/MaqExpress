@@ -4,12 +4,12 @@ use diesel_async::{
 };
 use tracing::{error, info};
 
-use crate::{controllers::utils::get_database_url_from_env, routes::establish_connection};
+use crate::{server::establish_connection, shared::utils::get_database_url_from_env};
 
-pub mod controllers;
-pub mod models;
-pub mod routes;
+pub mod domain;
 pub mod schema;
+pub mod server;
+pub mod shared;
 pub mod tests;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
@@ -30,7 +30,7 @@ async fn main() {
         AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_config(db_url.unwrap(), config);
     let pool = Pool::builder(mgr).max_size(10).build().unwrap();
 
-    let app = crate::routes::new_init_routes(pool).await;
+    let app = crate::server::new_init_routes(pool).await;
     let port = 3099;
     let route = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&route).await.unwrap();

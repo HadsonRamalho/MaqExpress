@@ -46,8 +46,12 @@ pré-requisito desta decisão.
 - `shared/` concentra o que é genuinamente transversal; nada de domínio mora lá.
 - `schema.rs` continua gerado pelo Diesel na raiz de `src/` — não entra em `domain/`.
 - Os imports internos mudam em massa (`crate::controllers::maquinas` → `crate::domain::maquinas::controller`).
-  Como não há `cargo` disponível no ambiente onde a reorganização foi feita, cada passo precisa de
-  `cargo check`/`cargo test` na máquina do dev antes de considerar o PR fechado.
+  A primeira leva (todos os domínios de uma vez) foi validada com `cargo check --all-targets` (verde);
+  cada PR seguinte que tocar a estrutura repete essa checagem antes de fechar.
+- A reorganização expôs e corrigiu bugs que já impediam a base de compilar: `deletar_maquina`
+  chamado mas nunca implementado, `PerformanceReport` sem `derive(ToSchema)`, um `Clone` duplicado
+  em `schema.rs` (conflito com o gerado por `diesel-derive-enum`) e o caminho relativo das fontes
+  do PDF. Ver [rust-rules.md](../architecture/rust-rules.md).
 - Ponto de partida para as demais dívidas de [rust-rules.md](../architecture/rust-rules.md) (erro
   estruturado, DTO vs entity): a casa organizada por domínio é onde elas passam a caber.
 
