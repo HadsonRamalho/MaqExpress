@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, PackageSearch } from "lucide-react";
+import { ChevronRight, PackageSearch } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -54,9 +54,10 @@ export default function MeusAlugueisPage() {
 			) : (
 				<div className="mt-8 space-y-3">
 					{lista.map((s) => (
-						<div
+						<Link
 							key={s.id}
-							className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center"
+							href={`/meus-alugueis/${s.id}`}
+							className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
 						>
 							<div className="relative hidden size-20 shrink-0 overflow-hidden rounded-lg bg-muted sm:block">
 								{s.maquinaImagem && (
@@ -82,29 +83,15 @@ export default function MeusAlugueisPage() {
 								<p className="mt-1 text-sm font-medium text-foreground">{formatarBRL(s.total)}</p>
 							</div>
 
-							<div className="shrink-0">
-								{s.status === "pendente" && (
-									<span className="text-sm text-muted-foreground">Aguardando o locador…</span>
-								)}
+							<div className="flex shrink-0 items-center gap-2">
 								{s.status === "aceita" && (
-									<Button asChild size="sm">
-										<Link href={`/pagamento/${s.id}`}>
-											Pagar agora
-											<ArrowRight className="size-4" />
-										</Link>
-									</Button>
+									<span className="hidden text-sm font-medium text-primary sm:inline">
+										Pagar agora
+									</span>
 								)}
-								{s.status === "paga" && (
-									<span className="text-sm font-medium text-primary">Pagamento confirmado</span>
-								)}
-								{s.status === "concluida" && (
-									<span className="text-sm text-muted-foreground">Locação concluída</span>
-								)}
-								{s.status === "recusada" && (
-									<span className="text-sm text-muted-foreground">Pedido recusado</span>
-								)}
+								<ChevronRight className="size-5 text-muted-foreground" />
 							</div>
-						</div>
+						</Link>
 					))}
 				</div>
 			)}

@@ -77,6 +77,19 @@ marketplace foi fechado ponta-a-ponta com um **store client-side persistido em `
 - Ainda **mock/localStorage**: trocar por `services/solicitacao.ts` quando o backend de pagamentos
   (Mercado Pago + split) existir. Semente vem de `solicitacoesRecebidas` em `lib/mock-data.ts`.
 
+### Frontend — detalhe do aluguel + frete + chat + avaliação (2026-10-04)
+Store ampliado (`lib/solicitacoes-store.ts`, chave `_V2` — formato mudou): `frete`/`tipoEntrega`,
+`recebido`/`recebidoEm`, `mensagens` (chat), `avaliacao`; ações `confirmarRecebimento`,
+`concluirLocacao`, `enviarMensagem`, `avaliarLocacao`.
+- **`/meus-alugueis/[id]`** (nova): acompanhamento com **timeline** (Solicitado→Aceito→Pago→
+  Recebido→Concluído), **dias restantes**, bloco de **entrega/frete**, **contrato** (via componente),
+  **chat** com o locador, **confirmar recebimento**, **registrar devolução/concluir** e **avaliação**
+  (estrelas + comentário) quando concluída. Resumo lateral com preço + imagem + link ao anúncio.
+- `SolicitarLocacao` ganhou escolha **retirada (grátis) / entrega (frete mock R$180)** — entra no total.
+- Contrato extraído em `components/marketplace/contrato-locacao.tsx` (reusado no pagamento e no detalhe);
+  chat em `chat-locacao.tsx`; avaliação em `avaliacao-locacao.tsx`.
+- Lista `/meus-alugueis` agora linka cada card para o detalhe. `tsc`/`biome`/`next build` verdes (14 rotas).
+
 ## Pendente / próximos passos (ordem sugerida)
 
 > **Estratégia atual (decisão do dono, 2026-10-04): desenvolver o FRONTEND primeiro** como
@@ -84,12 +97,14 @@ marketplace foi fechado ponta-a-ponta com um **store client-side persistido em `
 > **adiada** (não é prioridade agora).
 
 **Frontend — fluxos que faltam para fechar a validação do MVP:**
+- ~~Avaliações pós-locação; chat; detalhe com frete/contrato/dias restantes/recebimento;
+  estado "concluída".~~ **Feito 2026-10-04** (ver seção acima). Falta ainda: a **avaliação alimentar
+  a nota pública** da máquina na listagem/detalhe (hoje `nota`/`avaliacoes` são estáticos no mock).
+- **Visão do locador**: detalhe do pedido recebido com o **mesmo chat** (o `ChatLocacao` já aceita
+  `autorAtual="locador"`) e timeline; hoje `/solicitacoes` só aceita/recusa.
 - Perfil do locatário dentro do pagamento/contrato (dados de cobrança — hoje usa só `user.nome`).
-- Avaliações pós-locação (nota + comentário) e exibição na listagem/detalhe (mock).
-- Chat/mensagens entre locador e locatário (mock).
 - Galeria de imagens no detalhe (hoje uma imagem só) + campos de preço reais nos forms de
   cadastro/edição (`MachineForm` tem os inputs, mas não persistem nem alimentam o mock).
-- Estado de "concluída" (ex.: locador marca devolução) para fechar o ciclo após `paga`.
 
 1. **Migrar tratamento de erro para Catcher** (ADR 0006) — **ADIADO**: `services/BaseApi.ts` +
    `services/*` devolvendo `Result<T, E>`, `ApiError` de frontend a partir de `{code, message}` do

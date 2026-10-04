@@ -7,10 +7,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { COMISSAO_PERCENT, formatarBRL } from "@/lib/mock-data";
-import { criarSolicitacao } from "@/lib/solicitacoes-store";
+import { criarSolicitacao, type TipoEntrega } from "@/lib/solicitacoes-store";
 
 const DIA_MS = 86_400_000;
+/** Frete fixo mock para entrega; retirada no local é grátis. */
+const FRETE_ENTREGA = 180;
 
 function calcularSubtotal(dias: number, precoDia: number, precoSemana?: number) {
 	if (precoSemana && dias >= 7) {
@@ -42,9 +45,11 @@ export function SolicitarLocacao({
 	const { user } = useAuth();
 	const [inicio, setInicio] = useState("");
 	const [fim, setFim] = useState("");
+	const [tipoEntrega, setTipoEntrega] = useState<TipoEntrega>("retirada");
 	const [enviando, setEnviando] = useState(false);
 
 	const hoje = new Date().toISOString().slice(0, 10);
+	const frete = tipoEntrega === "entrega" ? FRETE_ENTREGA : 0;
 
 	const { dias, subtotal, taxa, total } = useMemo(() => {
 		if (!inicio || !fim) return { dias: 0, subtotal: 0, taxa: 0, total: 0 };
@@ -52,8 +57,8 @@ export function SolicitarLocacao({
 		const dias = diff > 0 ? diff : 0;
 		const subtotal = calcularSubtotal(dias, precoDia, precoSemana);
 		const taxa = Math.round((subtotal * COMISSAO_PERCENT) / 100);
-		return { dias, subtotal, taxa, total: subtotal + taxa };
-	}, [inicio, fim, precoDia, precoSemana]);
+		return { dias, subtotal, taxa, total: subtotal + taxa + frete };
+	}, [inicio, fim, precoDia, precoSemana, frete]);
 
 	const periodoInvalido = Boolean(inicio && fim) && dias <= 0;
 
@@ -82,6 +87,8 @@ export function SolicitarLocacao({
 			dias,
 			subtotal,
 			taxa,
+			frete,
+			tipoEntrega,
 			total,
 		});
 		setEnviando(false);
@@ -123,6 +130,36 @@ export function SolicitarLocacao({
 				<p className="mt-2 text-sm text-destructive">A devolução precisa ser depois do início.</p>
 			)}
 
+			<div className="mt-4 space-y-1.5">
+				<Label>Entrega</Label>
+				<RadioGroup
+					value={tipoEntrega}
+					onValueChange={(v) => setTipoEntrega(v as TipoEntrega)}
+					className="space-y-2"
+				>
+					<Label
+						htmlFor="retirada"
+						className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm font-normal has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+					>
+						<span className="flex items-center gap-2 text-foreground">
+							<RadioGroupItem value="retirada" id="retirada" />
+							Retirada no local
+						</span>
+						<span className="text-muted-foreground">Grátis</span>
+					</Label>
+					<Label
+						htmlFor="entrega"
+						className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm font-normal has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+					>
+						<span className="flex items-center gap-2 text-foreground">
+							<RadioGroupItem value="entrega" id="entrega" />
+							Entrega no endereço
+						</span>
+						<span className="text-muted-foreground">{formatarBRL(FRETE_ENTREGA)}</span>
+					</Label>
+				</RadioGroup>
+			</div>
+
 			{dias > 0 && (
 				<dl className="mt-5 space-y-2 text-sm">
 					<div className="flex justify-between">
@@ -134,6 +171,10 @@ export function SolicitarLocacao({
 					<div className="flex justify-between">
 						<dt className="text-muted-foreground">Taxa de serviço ({COMISSAO_PERCENT}%)</dt>
 						<dd className="text-foreground">{formatarBRL(taxa)}</dd>
+					</div>
+					<div className="flex justify-between">
+						<dt className="text-muted-foreground">Frete</dt>
+						<dd className="text-foreground">{frete > 0 ? formatarBRL(frete) : "Grátis"}</dd>
 					</div>
 					<div className="flex justify-between border-t border-border pt-2 text-base font-bold">
 						<dt className="text-foreground">Total</dt>

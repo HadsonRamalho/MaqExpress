@@ -10,16 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { ContratoLocacao } from "@/components/marketplace/contrato-locacao";
 import { COMISSAO_PERCENT, formatarBRL } from "@/lib/mock-data";
 import { registrarPagamento, useSolicitacao } from "@/lib/solicitacoes-store";
-
-function formatarData(iso: string) {
-	return new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR", {
-		day: "2-digit",
-		month: "long",
-		year: "numeric",
-	});
-}
 
 export default function PagamentoPage() {
 	const { id } = useParams<{ id: string }>();
@@ -69,7 +62,7 @@ export default function PagamentoPage() {
 		registrarPagamento(solicitacao.id);
 		setProcessando(false);
 		toast.success("Pagamento confirmado! Contrato aceito.");
-		router.push("/meus-alugueis");
+		router.push(`/meus-alugueis/${solicitacao.id}`);
 	}
 
 	return (
@@ -88,30 +81,8 @@ export default function PagamentoPage() {
 							<FileText className="size-4 text-primary" />
 							Contrato de locação
 						</h2>
-						<div className="mt-3 max-h-64 space-y-3 overflow-y-auto rounded-xl border border-border bg-muted/30 p-4 text-sm leading-relaxed text-muted-foreground">
-							<p>
-								Por este instrumento,{" "}
-								<strong className="text-foreground">{solicitacao.locador}</strong> (LOCADOR) cede em
-								locação ao LOCATÁRIO o equipamento{" "}
-								<strong className="text-foreground">{solicitacao.maquinaNome}</strong>, pelo período
-								de {formatarData(solicitacao.dataInicio)} a {formatarData(solicitacao.dataFim)} (
-								{solicitacao.dias} {solicitacao.dias === 1 ? "diária" : "diárias"}).
-							</p>
-							<p>
-								O LOCATÁRIO compromete-se a utilizar o equipamento conforme sua destinação, arcar
-								com danos decorrentes de uso indevido e devolvê-lo nas mesmas condições ao fim do
-								período.
-							</p>
-							<p>
-								O valor total da locação é de{" "}
-								<strong className="text-foreground">{formatarBRL(solicitacao.total)}</strong>,
-								incluindo a taxa de serviço da plataforma ({COMISSAO_PERCENT}%). A retirada e a
-								devolução ocorrem no local combinado entre as partes. Não há cobrança de caução.
-							</p>
-							<p>
-								O pagamento é processado pela plataforma, que repassa o valor ao LOCADOR descontada
-								a comissão. O aceite digital a seguir tem validade jurídica e registra data e hora.
-							</p>
+						<div className="mt-3 max-h-64 overflow-y-auto rounded-xl border border-border bg-muted/30 p-4">
+							<ContratoLocacao solicitacao={solicitacao} />
 						</div>
 						<div className="mt-3 flex items-start gap-3">
 							<Checkbox
@@ -169,6 +140,14 @@ export default function PagamentoPage() {
 								<div className="flex justify-between">
 									<dt className="text-muted-foreground">Taxa de serviço ({COMISSAO_PERCENT}%)</dt>
 									<dd className="text-foreground">{formatarBRL(solicitacao.taxa)}</dd>
+								</div>
+								<div className="flex justify-between">
+									<dt className="text-muted-foreground">
+										Frete {solicitacao.tipoEntrega === "entrega" ? "(entrega)" : "(retirada)"}
+									</dt>
+									<dd className="text-foreground">
+										{solicitacao.frete > 0 ? formatarBRL(solicitacao.frete) : "Grátis"}
+									</dd>
 								</div>
 								<div className="flex justify-between border-t border-border pt-2 text-base font-bold">
 									<dt className="text-foreground">Total</dt>
