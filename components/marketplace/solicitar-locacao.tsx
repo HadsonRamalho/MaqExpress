@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { COMISSAO_PERCENT, formatarBRL } from "@/lib/mock-data";
+import { criarSolicitacao } from "@/lib/solicitacoes-store";
 
 const DIA_MS = 86_400_000;
 
@@ -22,11 +23,17 @@ function calcularSubtotal(dias: number, precoDia: number, precoSemana?: number) 
 
 export function SolicitarLocacao({
 	maquinaId,
+	maquinaNome,
+	maquinaImagem,
+	locador,
 	precoDia,
 	precoSemana,
 	disponivel,
 }: {
 	maquinaId: string;
+	maquinaNome: string;
+	maquinaImagem?: string;
+	locador: string;
 	precoDia: number;
 	precoSemana?: number;
 	disponivel: boolean;
@@ -61,10 +68,25 @@ export function SolicitarLocacao({
 			return;
 		}
 		setEnviando(true);
-		// Integração real com services/solicitacao entra quando o fluxo de pagamento existir.
-		await new Promise((r) => setTimeout(r, 700));
+		// Persistência real via services/solicitacao entra quando o backend expuser
+		// o fluxo de pagamento (Mercado Pago + split).
+		await new Promise((r) => setTimeout(r, 500));
+		criarSolicitacao({
+			maquinaId,
+			maquinaNome,
+			maquinaImagem,
+			locador,
+			solicitante: user.nome,
+			dataInicio: inicio,
+			dataFim: fim,
+			dias,
+			subtotal,
+			taxa,
+			total,
+		});
 		setEnviando(false);
-		toast.success("Solicitação enviada! O locador vai responder em breve.");
+		toast.success("Solicitação enviada! Acompanhe em “Meus aluguéis”.");
+		router.push("/meus-alugueis");
 	}
 
 	return (

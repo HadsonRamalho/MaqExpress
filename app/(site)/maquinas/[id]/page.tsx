@@ -88,6 +88,9 @@ export default async function MaquinaDetalhePage({ params }: { params: Promise<{
 					<div className="lg:sticky lg:top-24">
 						<SolicitarLocacao
 							maquinaId={maquina.id}
+							maquinaNome={maquina.nome}
+							maquinaImagem={maquina.imagem}
+							locador={maquina.locador}
 							precoDia={maquina.precoDia}
 							precoSemana={maquina.precoSemana}
 							disponivel={maquina.disponivel}

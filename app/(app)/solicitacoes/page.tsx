@@ -1,16 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { Check, Inbox, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	formatarBRL,
-	solicitacoesRecebidas,
-	statusLabel,
-	type StatusSolicitacao,
-} from "@/lib/mock-data";
+import { formatarBRL, statusLabel, type StatusSolicitacao } from "@/lib/mock-data";
+import { responderSolicitacao, useSolicitacoes } from "@/lib/solicitacoes-store";
 
 const variantePorStatus: Record<
 	StatusSolicitacao,
@@ -31,10 +26,10 @@ function formatarData(iso: string) {
 }
 
 export default function SolicitacoesPage() {
-	const [lista, setLista] = useState(solicitacoesRecebidas);
+	const lista = useSolicitacoes();
 
-	function responder(id: string, status: StatusSolicitacao) {
-		setLista((atual) => atual.map((s) => (s.id === id ? { ...s, status } : s)));
+	function responder(id: string, status: "aceita" | "recusada") {
+		responderSolicitacao(id, status);
 		toast.success(
 			status === "aceita"
 				? "Solicitação aceita. O locatário será avisado para pagar."
@@ -75,9 +70,7 @@ export default function SolicitacoesPage() {
 									{s.solicitante} · {formatarData(s.dataInicio)} a {formatarData(s.dataFim)} (
 									{s.dias} {s.dias === 1 ? "dia" : "dias"})
 								</p>
-								<p className="mt-1 text-sm font-medium text-foreground">
-									{formatarBRL(s.valorTotal)}
-								</p>
+								<p className="mt-1 text-sm font-medium text-foreground">{formatarBRL(s.total)}</p>
 							</div>
 
 							{s.status === "pendente" && (

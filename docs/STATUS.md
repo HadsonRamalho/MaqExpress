@@ -64,10 +64,35 @@ logado com sidebar + proteção de rota).
   `MaquinaImagem`, `AdicionarImagemDto`) e `services/maquina.ts`
   (`listarImagens`/`adicionarImagem`/`removerImagem`). `cargo check --all-targets` e `biome` verdes.
 
+### Frontend — ciclo do locatário: solicitar → pagar + contrato (2026-10-04)
+Decisão do dono: **frontend primeiro** como validação do MVP; o backend vem depois. O núcleo do
+marketplace foi fechado ponta-a-ponta com um **store client-side persistido em `localStorage`**
+(`lib/solicitacoes-store.ts`, via `useSyncExternalStore`) — funciona sem backend.
+- `SolicitarLocacao` agora **cria** a solicitação (status `pendente`) e leva a `/meus-alugueis`.
+- **`/meus-alugueis`** (locatário): acompanha pedidos; quando o locador aceita, aparece "Pagar agora".
+- **`/pagamento/[id]`**: resumo + **contrato de locação** com **aceite digital** (checkbox) +
+  forma de pagamento (Pix/cartão, mock) → confirma (`status "paga"`, `contratoAceito`).
+- `/solicitacoes` (locador) migrada para o mesmo store — aceitar/recusar reflete no locatário.
+- Nav do painel ganhou "Meus aluguéis". `tsc`, `biome` e `next build` verdes (13 rotas).
+- Ainda **mock/localStorage**: trocar por `services/solicitacao.ts` quando o backend de pagamentos
+  (Mercado Pago + split) existir. Semente vem de `solicitacoesRecebidas` em `lib/mock-data.ts`.
+
 ## Pendente / próximos passos (ordem sugerida)
 
-1. **Migrar tratamento de erro para Catcher** (ADR 0006): `services/BaseApi.ts` + `services/*`
-   devolvendo `Result<T, E>`, definir um `ApiError` de frontend a partir de `{code, message}` do
+> **Estratégia atual (decisão do dono, 2026-10-04): desenvolver o FRONTEND primeiro** como
+> validação do MVP (mock/localStorage), e construir o backend depois. A migração do Catcher foi
+> **adiada** (não é prioridade agora).
+
+**Frontend — fluxos que faltam para fechar a validação do MVP:**
+- Perfil do locatário dentro do pagamento/contrato (dados de cobrança — hoje usa só `user.nome`).
+- Avaliações pós-locação (nota + comentário) e exibição na listagem/detalhe (mock).
+- Chat/mensagens entre locador e locatário (mock).
+- Galeria de imagens no detalhe (hoje uma imagem só) + campos de preço reais nos forms de
+  cadastro/edição (`MachineForm` tem os inputs, mas não persistem nem alimentam o mock).
+- Estado de "concluída" (ex.: locador marca devolução) para fechar o ciclo após `paga`.
+
+1. **Migrar tratamento de erro para Catcher** (ADR 0006) — **ADIADO**: `services/BaseApi.ts` +
+   `services/*` devolvendo `Result<T, E>`, `ApiError` de frontend a partir de `{code, message}` do
    backend, depois `hooks/use-auth.tsx`.
 2. **Ligar frontend ao backend real** (substituir `lib/mock-data.ts` por `services/maquina.ts`
    etc.) — backend já expõe **preço** e **imagens** (feito 2026-10-04). Falta a UI consumir

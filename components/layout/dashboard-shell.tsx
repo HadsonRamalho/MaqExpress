@@ -4,7 +4,7 @@ import type React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Inbox, LogOut, Menu, PlusCircle, Tractor, User } from "lucide-react";
+import { ArrowLeft, Inbox, LogOut, Menu, Package, PlusCircle, Tractor, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MaqExpressLogo } from "@/components/layout/logo";
 
 const itens = [
+	{ href: "/meus-alugueis", label: "Meus aluguéis", icon: Package },
 	{ href: "/minhas-maquinas", label: "Minhas máquinas", icon: Tractor },
 	{ href: "/solicitacoes", label: "Solicitações", icon: Inbox },
 	{ href: "/cadastrar-maquina", label: "Anunciar máquina", icon: PlusCircle },
