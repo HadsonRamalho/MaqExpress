@@ -7,7 +7,8 @@ use hyper::{HeaderMap, StatusCode};
 use uuid::Uuid;
 
 use crate::domain::maquinas::model::{
-    AtualizarMaquina, AtualizarMaquinaDto, CadastrarMaquina, Maquina,
+    AdicionarImagemDto, AtualizarMaquina, AtualizarMaquinaDto, CadastrarMaquina, Maquina,
+    MaquinaImagem,
 };
 use crate::shared::jwt::extract_claims_from_header;
 use crate::shared::utils::get_conn;
@@ -122,6 +123,109 @@ pub async fn api_delete_maquina(
     let conn = &mut get_conn(&pool).await?;
 
     match crate::domain::maquinas::model::deletar_maquina(conn, &id_maquina, &id_usuario).await {
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
+    }
+}
+
+/// Garante que a máquina existe e pertence ao usuário logado.
+async fn garantir_dono_maquina(
+    conn: &mut AsyncPgConnection,
+    id_maquina: &Uuid,
+    id_usuario: &Uuid,
+) -> Result<(), (StatusCode, Json<String>)> {
+    let maquina = crate::domain::maquinas::model::buscar_maquina_por_id(conn, id_maquina)
+        .await
+        .map_err(|e| (StatusCode::NOT_FOUND, Json(e)))?;
+
+    if maquina.id_usuario.as_ref() != Some(id_usuario) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json("Você não tem permissão para alterar esta máquina".to_string()),
+        ));
+    }
+    Ok(())
+}
+
+#[utoipa::path(
+    post,
+    path = "/maquina/{id_maquina}/imagens",
+    security(("bearer_auth" = [])),
+    params(("id_maquina" = String, Path, description = "UUID da Máquina")),
+    responses(
+        (status = 201, description = "Imagem adicionada"),
+        (status = 403, description = "Sem permissão", body = String),
+        (status = 404, description = "Máquina não encontrada", body = String),
+        (status = 500, description = "Erro interno", body = String)
+    ),
+)]
+pub async fn api_add_imagem_maquina(
+    State(pool): State<Pool<AsyncPgConnection>>,
+    Path(id_maquina): Path<Uuid>,
+    headers: HeaderMap,
+    JsonValidado(input): JsonValidado<AdicionarImagemDto>,
+) -> Result<StatusCode, (StatusCode, Json<String>)> {
+    let id_usuario = extract_claims_from_header(State(pool.clone()), &headers)
+        .await?
+        .1
+        .id;
+    let conn = &mut get_conn(&pool).await?;
+
+    garantir_dono_maquina(conn, &id_maquina, &id_usuario).await?;
+
+    let imagem = MaquinaImagem::novo(input, id_maquina);
+    match crate::domain::maquinas::model::adicionar_imagem(conn, &imagem).await {
+        Ok(_) => Ok(StatusCode::CREATED),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/maquina/{id_maquina}/imagens",
+    params(("id_maquina" = String, Path, description = "UUID da Máquina")),
+    responses((status = 200, description = "Imagens da máquina")),
+)]
+pub async fn api_list_imagens_maquina(
+    State(pool): State<Pool<AsyncPgConnection>>,
+    Path(id_maquina): Path<Uuid>,
+) -> Result<(StatusCode, Json<Vec<MaquinaImagem>>), (StatusCode, Json<String>)> {
+    let conn = &mut get_conn(&pool).await?;
+
+    match crate::domain::maquinas::model::listar_imagens_maquina(conn, &id_maquina).await {
+        Ok(lista) => Ok((StatusCode::OK, Json(lista))),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
+    }
+}
+
+#[utoipa::path(
+    delete,
+    path = "/maquina/{id_maquina}/imagens/{id_imagem}",
+    security(("bearer_auth" = [])),
+    params(
+        ("id_maquina" = String, Path, description = "UUID da Máquina"),
+        ("id_imagem" = String, Path, description = "UUID da Imagem")
+    ),
+    responses(
+        (status = 204, description = "Imagem removida"),
+        (status = 403, description = "Sem permissão", body = String),
+        (status = 404, description = "Não encontrado", body = String)
+    ),
+)]
+pub async fn api_remove_imagem_maquina(
+    State(pool): State<Pool<AsyncPgConnection>>,
+    Path((id_maquina, id_imagem)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
+) -> Result<StatusCode, (StatusCode, Json<String>)> {
+    let id_usuario = extract_claims_from_header(State(pool.clone()), &headers)
+        .await?
+        .1
+        .id;
+    let conn = &mut get_conn(&pool).await?;
+
+    garantir_dono_maquina(conn, &id_maquina, &id_usuario).await?;
+
+    match crate::domain::maquinas::model::remover_imagem(conn, &id_imagem).await {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e))),
     }

@@ -106,6 +106,10 @@ export interface Maquina {
 	numero_serie: string;
 	ativo: boolean;
 	data_cadastro: string;
+	/** Preços em centavos de BRL. Diária obrigatória; semanal/mensal opcionais. */
+	preco_diaria: number;
+	preco_semanal?: number | null;
+	preco_mensal?: number | null;
 }
 
 export interface CadastrarMaquina {
@@ -113,10 +117,30 @@ export interface CadastrarMaquina {
 	descricao: string;
 	numero_serie: string;
 	id_empresa?: UUID;
+	/** Preços em centavos de BRL. */
+	preco_diaria: number;
+	preco_semanal?: number | null;
+	preco_mensal?: number | null;
 }
 
 export interface AtualizarMaquinaDto extends CadastrarMaquina {
 	ativo: boolean;
+}
+
+/** Imagem de uma máquina (metadados/URL; armazenamento via Supabase é posterior). */
+export interface MaquinaImagem {
+	id: UUID;
+	id_maquina: UUID;
+	url: string;
+	ordem: number;
+	principal: boolean;
+	data_cadastro: string;
+}
+
+export interface AdicionarImagemDto {
+	url: string;
+	ordem?: number;
+	principal?: boolean;
 }
 
 export interface SolicitacaoContrato {

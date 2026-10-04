@@ -70,6 +70,21 @@ diesel::table! {
         data_cadastro -> Timestamp,
         data_atualizacao -> Timestamp,
         data_delecao -> Nullable<Timestamp>,
+        preco_diaria -> Int8,
+        preco_semanal -> Nullable<Int8>,
+        preco_mensal -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
+    maquina_imagens (id) {
+        id -> Uuid,
+        id_maquina -> Uuid,
+        #[max_length = 512]
+        url -> Varchar,
+        ordem -> Int4,
+        principal -> Bool,
+        data_cadastro -> Timestamp,
     }
 }
 
@@ -116,6 +131,7 @@ diesel::table! {
 diesel::joinable!(contratos -> solicitacoes_contrato (id_solicitacao));
 diesel::joinable!(empresas -> usuarios (id_usuario));
 diesel::joinable!(enderecos -> usuarios (id_usuario));
+diesel::joinable!(maquina_imagens -> maquinas (id_maquina));
 diesel::joinable!(maquinas -> empresas (id_empresa));
 diesel::joinable!(maquinas -> usuarios (id_usuario));
 diesel::joinable!(solicitacoes_contrato -> maquinas (id_maquina));
@@ -125,6 +141,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     contratos,
     empresas,
     enderecos,
+    maquina_imagens,
     maquinas,
     solicitacoes_contrato,
     usuarios,

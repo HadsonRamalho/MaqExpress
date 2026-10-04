@@ -1,5 +1,12 @@
 import { BaseApi } from "./BaseApi";
-import type { Maquina, CadastrarMaquina, AtualizarMaquinaDto, UUID } from "@/interfaces";
+import type {
+	AdicionarImagemDto,
+	AtualizarMaquinaDto,
+	CadastrarMaquina,
+	Maquina,
+	MaquinaImagem,
+	UUID,
+} from "@/interfaces";
 
 class MaquinaService extends BaseApi {
 	constructor() {
@@ -21,6 +28,19 @@ class MaquinaService extends BaseApi {
 
 	async remover(id: UUID) {
 		return await this.api.delete(`/remover/${id}`);
+	}
+
+	async listarImagens(idMaquina: UUID) {
+		const response = await this.api.get<MaquinaImagem[]>(`/${idMaquina}/imagens`);
+		return response.data;
+	}
+
+	async adicionarImagem(idMaquina: UUID, data: AdicionarImagemDto) {
+		return await this.api.post(`/${idMaquina}/imagens`, data);
+	}
+
+	async removerImagem(idMaquina: UUID, idImagem: UUID) {
+		return await this.api.delete(`/${idMaquina}/imagens/${idImagem}`);
 	}
 }
 

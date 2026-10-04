@@ -1,7 +1,7 @@
 # STATUS — MaqExpress
 
 Registro vivo do estado do projeto para retomada (por outro agente ou pessoa).
-Atualizar a cada entrega. Última atualização: 2026-10-03.
+Atualizar a cada entrega. Última atualização: 2026-10-04.
 
 Branch de trabalho: `main` (pushes vão direto pra `main`, conforme o dono pediu).
 
@@ -49,15 +49,34 @@ logado com sidebar + proteção de rota).
 - Sessão no header (menu do usuário + logout).
 - **Dados mock** em `lib/mock-data.ts` (8 máquinas, solicitações) — ainda não ligado ao backend.
 
+### Backend MVP — máquinas: preço + imagens (2026-10-04)
+- Migrations novas (`src-back/migrations/`, convenção `-0000`):
+  `2026-10-04-120000-0000_add_precos_maquinas` e `2026-10-04-120100-0000_criar_maquina_imagens`.
+- **Preços** na tabela `maquinas`: `preco_diaria` (NOT NULL), `preco_semanal`, `preco_mensal` —
+  **em centavos de BRL (`i64`/BIGINT)** para evitar float em dinheiro. Validação `range(min=1)`.
+  Fluem por `cadastrar`/`atualizar`/`listar` (o `GET /maquina/listar` já devolve os preços).
+- **Imagens**: tabela `maquina_imagens` (id, id_maquina FK `ON DELETE CASCADE`, url, ordem,
+  principal, data_cadastro) + modelo `MaquinaImagem` + CRUD. Guarda só URL/metadados — o upload
+  do binário (Supabase Storage) continua pendente.
+- Endpoints novos em `/maquina`: `POST /{id}/imagens`, `GET /{id}/imagens` (público),
+  `DELETE /{id}/imagens/{id_imagem}`. Add/remove checam dono (`garantir_dono_maquina` → 403/404).
+- Contrato TS sincronizado à mão: `interfaces/index.ts` (`Maquina`, `CadastrarMaquina`,
+  `MaquinaImagem`, `AdicionarImagemDto`) e `services/maquina.ts`
+  (`listarImagens`/`adicionarImagem`/`removerImagem`). `cargo check --all-targets` e `biome` verdes.
+
 ## Pendente / próximos passos (ordem sugerida)
 
 1. **Migrar tratamento de erro para Catcher** (ADR 0006): `services/BaseApi.ts` + `services/*`
    devolvendo `Result<T, E>`, definir um `ApiError` de frontend a partir de `{code, message}` do
    backend, depois `hooks/use-auth.tsx`.
 2. **Ligar frontend ao backend real** (substituir `lib/mock-data.ts` por `services/maquina.ts`
-   etc.) — depende do backend expor **preço** e **imagens** (hoje não tem).
+   etc.) — backend já expõe **preço** e **imagens** (feito 2026-10-04). Falta a UI consumir
+   (listagem/detalhe/cadastro usar preços reais + galeria de imagens) e incluir os campos de
+   preço nos forms de `/cadastrar-maquina` e `/editar-maquina/[id]`.
 3. **Backend MVP** (ver plano aprovado):
-   - Máquinas: campos de preço (diária/semana/mês) + tabela de imagens.
+   - ~~Máquinas: campos de preço (diária/semana/mês) + tabela de imagens.~~ **Feito 2026-10-04**
+     (preços em centavos; tabela `maquina_imagens` com URL — upload Supabase ainda pendente).
+   - Máquinas: faltam ainda **categoria** e **localização** (mock tem `categoriaSlug`, `cidade/uf`).
    - Status da locação como **enum Postgres** (hoje `SolicitacaoContrato.status` é `String`).
    - Disponibilidade/calendário; **pagamentos** (novo domínio) + split Mercado Pago + webhook;
      contrato + aceite digital; avaliações; chat.
